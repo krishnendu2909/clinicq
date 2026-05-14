@@ -1,194 +1,184 @@
 drop database if exists hospital_db;
 
 
- 
 
 CREATE DATABASE hospital_db;
 
 
- 
 
 USE hospital_db;
 
 
- 
 
 CREATE TABLE users
 
 (
 
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+id BIGINT PRIMARY KEY AUTO_INCREMENT,
 
-    email VARCHAR(100) UNIQUE NOT NULL,
+email VARCHAR(100) UNIQUE NOT NULL,
 
-    password VARCHAR(255) NOT NULL,
+password VARCHAR(255) NOT NULL,
 
-    role ENUM('ADMIN','DOCTOR','RECEPTIONIST','PATIENT') NOT NULL,
+role ENUM('ADMIN','DOCTOR','RECEPTIONIST','PATIENT') NOT NULL,
 
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-    reset_token VARCHAR(255),
+reset_token VARCHAR(255),
 
-    token_expiry DATETIME,
+token_expiry DATETIME,
 
-    failed_attempts INT DEFAULT 0,
+failed_attempts INT DEFAULT 0,
 
-    account_locked BOOLEAN DEFAULT FALSE,
+account_locked BOOLEAN DEFAULT FALSE,
 
-    lock_time DATETIME
+lock_time DATETIME
 
-   
 
-   
+
+
 
 );
 
 
- 
 
 CREATE TABLE patients
 
 (
 
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+id BIGINT PRIMARY KEY AUTO_INCREMENT,
 
-    user_id BIGINT,
+user_id BIGINT,
 
-    name VARCHAR(100) NOT NULL,
+name VARCHAR(100) NOT NULL,
 
-    date_of_birth DATE,
+date_of_birth DATE,
 
-    gender ENUM('MALE','FEMALE','OTHER'),
+gender ENUM('MALE','FEMALE','OTHER'),
 
-    phone VARCHAR(20),
+phone VARCHAR(20),
 
-    FOREIGN KEY (user_id) REFERENCES users(id)
+FOREIGN KEY (user_id) REFERENCES users(id)
 
 );
 
 
- 
 
 CREATE TABLE doctors
 
 (
 
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+id BIGINT PRIMARY KEY AUTO_INCREMENT,
 
-    user_id BIGINT,
+user_id BIGINT,
 
-    name VARCHAR(100) NOT NULL,
+name VARCHAR(100) NOT NULL,
 
-    department ENUM('CARDIOLOGY','ORTHOPEDICS','PEDIATRICS','GENERAL') ,
+department ENUM('CARDIOLOGY','ORTHOPEDICS','PEDIATRICS','GENERAL') ,
 
-    gender ENUM('MALE','FEMALE','OTHER'),
+gender ENUM('MALE','FEMALE','OTHER'),
 
-    phone VARCHAR(20),
+phone VARCHAR(20),
 
-    location VARCHAR(100),
+location VARCHAR(100),
 
-    description VARCHAR(250),
+description VARCHAR(250),
 
-    FOREIGN KEY (user_id) REFERENCES users(id)
+FOREIGN KEY (user_id) REFERENCES users(id)
 
 );
 
 
- 
 
 CREATE TABLE time_slots
 
 (
 
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+id BIGINT PRIMARY KEY AUTO_INCREMENT,
 
-    doctor_id BIGINT,
+doctor_id BIGINT,
 
-    slot_date DATE,
+slot_date DATE,
 
-    start_time TIME,
+start_time TIME,
 
-    end_time TIME,
+end_time TIME,
 
-    booked BOOLEAN DEFAULT FALSE,
+booked BOOLEAN DEFAULT FALSE,
 
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-   
 
-    FOREIGN KEY (doctor_id) REFERENCES doctors(id)
 
-   
+FOREIGN KEY (doctor_id) REFERENCES doctors(id)
+
+
 
 );
 
 
- 
 
 CREATE TABLE appointments
 
 (
 
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+id BIGINT PRIMARY KEY AUTO_INCREMENT,
 
-    patient_id BIGINT,
+patient_id BIGINT,
 
-    doctor_id BIGINT,
+doctor_id BIGINT,
 
-    time_slot_id BIGINT,
+time_slot_id BIGINT,
 
-    reason VARCHAR(300),
+reason VARCHAR(300),
 
-    status ENUM('BOOKED','CHECKED_IN','COMPLETED','CANCELLED','NO_SHOW','IN_CONSULTATION'),
+status ENUM('BOOKED','CHECKED_IN','COMPLETED','CANCELLED','NO_SHOW','IN_CONSULTATION'),
 
-    type ENUM('WALK_IN','PRE_BOOKED'),
+type ENUM('WALK_IN','PRE_BOOKED'),
 
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
 
- 
 
-    FOREIGN KEY (patient_id) REFERENCES patients(id),
+FOREIGN KEY (patient_id) REFERENCES patients(id),
 
-    FOREIGN KEY (doctor_id) REFERENCES doctors(id),
+FOREIGN KEY (doctor_id) REFERENCES doctors(id),
 
-    FOREIGN KEY (time_slot_id) REFERENCES time_slots(id)
+FOREIGN KEY (time_slot_id) REFERENCES time_slots(id)
 
 );
 
 
- 
 
 CREATE TABLE tokens
 
 (
 
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+id BIGINT PRIMARY KEY AUTO_INCREMENT,
 
-    token_number INT,
+token_number INT,
 
-    token_display VARCHAR(20),
+token_display VARCHAR(20),
 
-    patient_id BIGINT,
+patient_id BIGINT,
 
-    doctor_id BIGINT,
+doctor_id BIGINT,
 
-    appointment_id BIGINT,
+appointment_id BIGINT,
 
-    date DATE,  
+date DATE,
 
-    status ENUM('WAITING','IN_CONSULTATION','COMPLETED','NO_SHOW'),
+status ENUM('WAITING','IN_CONSULTATION','COMPLETED','NO_SHOW'),
 
-    check_in_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+check_in_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
+position INT,
 
- 
+FOREIGN KEY (patient_id) REFERENCES patients(id),
 
-    FOREIGN KEY (patient_id) REFERENCES patients(id),
+FOREIGN KEY (doctor_id) REFERENCES doctors(id),
 
-    FOREIGN KEY (doctor_id) REFERENCES doctors(id),
-
-    FOREIGN KEY (appointment_id) REFERENCES appointments(id)
+FOREIGN KEY (appointment_id) REFERENCES appointments(id)
 
 );
 
@@ -196,56 +186,101 @@ CREATE TABLE admin
 
 (
 
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+id BIGINT PRIMARY KEY AUTO_INCREMENT,
 
-    max_patients_per_slot INT DEFAULT 1,
+max_patients_per_slot INT DEFAULT 1,
 
-    max_days_in_advance INT DEFAULT 7,  
+max_days_in_advance INT DEFAULT 7,
 
-    cancellation_cutoff_hours INT DEFAULT 2,
+cancellation_cutoff_hours INT DEFAULT 2,
 
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
 
- 
 
 );
 
 
- 
 
 CREATE TABLE doctor_schedule
 
 (
 
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+id BIGINT PRIMARY KEY AUTO_INCREMENT,
 
-    doctor_id BIGINT,
+doctor_id BIGINT,
 
-   
 
-    day_of_week ENUM('MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDAY'),
 
-    start_time TIME,
+day_of_week ENUM('MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDAY'),
 
-    end_time TIME,
+start_time TIME,
 
-    slot_duration INT,
+end_time TIME,
 
-   
+slot_duration INT,
 
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-    FOREIGN KEY (doctor_id) REFERENCES doctors(id)
+
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+FOREIGN KEY (doctor_id) REFERENCES doctors(id)
+
+);
+
+
+
+CREATE TABLE prescription
+
+(
+
+id BIGINT PRIMARY KEY AUTO_INCREMENT,
+
+appointment_id BIGINT,
+
+diagnosis TEXT,
+
+notes TEXT,
+
+status ENUM('DRAFT','FINAL'),
+
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+FOREIGN KEY (appointment_id) REFERENCES appointments(id)
+
+);
+
+
+
+CREATE TABLE prescription_item
+
+(
+
+id BIGINT PRIMARY KEY AUTO_INCREMENT,
+
+prescription_id BIGINT,
+
+medicine_name VARCHAR(100),
+
+dosage VARCHAR(50),
+
+frequency VARCHAR(50),
+
+duration VARCHAR(50),
+
+
+
+FOREIGN KEY (prescription_id) REFERENCES prescription(id)
 
 );
 
 
 
 
- 
+
+
 
 select * from users;
 
@@ -262,6 +297,3 @@ select * from tokens;
 select * from admin;
 
 select * from doctor_schedule;
-
-
-
