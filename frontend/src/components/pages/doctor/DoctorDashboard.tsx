@@ -1,508 +1,1768 @@
+
+ 
+
 // import React, { useState, useEffect, useCallback } from 'react';
 
-// import axios from 'axios';
+
+
+
+
+ 
 
 // import axiosInstance from '../../../services/axiosInstance';
 
+
+
+
+
+
+
+
+
+
+
+ 
+
 // interface Patient {
 
-//   id: number; // Add this
 
-//   appointmentId: number; // For your backend calls
 
-//   token: string;
 
-//   name: string;
 
-//   time: string;
+ 
 
-//   status: 'COMPLETED' | 'IN_CONSULTATION' | 'WAITING' | 'BOOKED' | 'NO_SHOW';
+//  id: number;
+
+
+
+
+
+ 
+
+//  appointmentId: number;
+
+
+
+
+
+ 
+
+//  token: string;
+
+
+
+
+
+ 
+
+//  name: string;
+
+
+
+
+
+ 
+
+//  time: string;
+
+
+
+
+
+ 
+
+//  status: 'COMPLETED' | 'IN_CONSULTATION' | 'WAITING' | 'BOOKED' | 'NO_SHOW';
+
+
+
+
+
+ 
 
 // }
+
+
+
+
+
+
+
+
+
 
 
  
 
 // const DoctorDashboard: React.FC = () => {
 
-//   const [patients, setPatients] = useState<Patient[]>([]);
-
-//   const [loading, setLoading] = useState(true);
-
-//   // 2. Add the Fetch Function
-
-//   const fetchSchedule = useCallback(async () => {
-
-//     setLoading(true);
-
-//     try {
-
-//       //const doctorId = 4; // Use logged-in doctor ID
-
-//       const response = await axiosInstance.get(`/clinicq/doctor/schedule`);
-
-
- 
-
-//       const mappedData = response.data.map((t: any) => ({
-
-//         id: t.id,
-
-//         appointmentId: t.appointment?.id,
-
-//         token: `TKN-${t.tokenNumber}`,
-
-//         name: t.patient?.name || "Unknown Patient", // Navigation: t -> patient -> name
-
-//         // Navigation: t -> appointment -> timeSlot -> startTime
-
-//         time: t.appointment?.timeSlot?.startTime?.substring(0, 5) || "00:00",
-
-//         status: t.status // This is 'WAITING' or 'IN_CONSULTATION'
-
-//       }));
-
-
- 
-
-//       setPatients(mappedData);
-
-//     } catch (err) {
-
-//       console.error("Failed to load schedule", err);
-
-//     } finally {
-
-//       setLoading(false);
-
-//     }
-
-//   }, []);
 
 
 
 
  
 
-//   useEffect(() => {
-
-//     fetchSchedule();
-
-//   }, [fetchSchedule]);
+//  const [patients, setPatients] = useState<Patient[]>([]);
 
 
- 
-
-//   const timeToMinutes = (timeStr: string) => {
-
-//     const [time, modifier] = timeStr.split(' ');
-
-//     let [hours, minutes] = time.split(':').map(Number);
-
-//     if (hours === 12) hours = 0;
-
-//     if (modifier === 'PM') hours += 12;
-
-//     return hours * 60 + minutes;
-
-//   };
-
-
- 
-
-//   // 3. Update the Status function to call backend
-
-//   const updateStatus = async (tokenString: string, newStatus: string) => {
-
-//     // 1. Find the actual patient object to get their database ID (id, not tokenNumber)
-
-//     const patient = patients.find(p => p.token === tokenString);
-
-//     if (!patient) return;
-
-
- 
-
-//     try {
-
-//       // 2. Call the PUT endpoint from your Swagger
-
-//       // Format: /clinicq/doctor/token/{tokenId}/status?status=COMPLETED
-
-//       await axiosInstance.put(`/clinicq/doctor/token/${patient.id}/status`, null, {
-
-//         params: { status: newStatus }
-
-//       });
-
-
- 
-
-//       // 3. Refresh the UI data after successful update
-
-//       fetchSchedule();
-
-//     } catch (err) {
-
-//       console.error("Status update failed:", err);
-
-//       alert("Failed to update status. Please try again.");
-
-//     }
-
-//   };
-
-
- 
-
-//   // 1. Sort the full list for the left table
-
-//   //const sortedSchedule = [...patients].sort((a, b) => a.time.localeCompare(b.time));
-
-//   // Place this right before your 'return'
-
-//   // 1. Safe mapping for status and time
-
-//   // 1. Fixed Sorting: Use localeCompare to avoid the split(' ') crash
-
-//   const sortedSchedule = [...patients].sort((a, b) => (a.time || "").localeCompare(b.time || ""));
-
-
- 
-
-//   // 2. Fixed Filtering: Ensure underscores or hyphens match your DB
-
-//   const currentPatient = patients.find(p => p.status === 'IN_CONSULTATION') ||
-
-//     patients.find(p => p.status === 'WAITING');
-
-
- 
-
-//   const upcomingList = patients.filter(p =>
-
-//     p.status === 'WAITING' && p.appointmentId !== currentPatient?.appointmentId
-
-//   );
-
-
- 
-
-//   const nextPatient = upcomingList.length > 0 ? upcomingList[0] : null;
-
-//   const completedToday = patients.filter(p => p.status === 'COMPLETED');
 
 
 
  
 
-//   return (
+//  const [loading, setLoading] = useState(true);
 
-//     <div className="vh-100 bg-black text-white p-2 overflow-hidden d-flex flex-column">
 
-//       {/* COMPACT HEADER */}
 
-//       <div className="d-flex justify-content-between align-items-center mb-2 px-2">
-
-//         <h4 className="fw-bold text-primary mb-0">Physician Console
-
-//           <small className="text-secondary fs-6 ps-2">Dr. Sarah Devis</small>
-
-//         </h4>
-
-//         <div className="badge bg-dark border border-secondary py-1 px-3 rounded-pill text-info small" style={{ fontSize: '11px' }}>
-
-//           {new Date().toLocaleDateString()}
-
-//         </div>
-
-//       </div>
 
 
  
 
-//       {/* MAIN CONTENT ROW */}
-
-//       <div className="row g-2 flex-grow-1 overflow-hidden mx-0" style={{ minHeight: '400px' }}>
+//  const [breakMode, setBreakMode] = useState(false);
 
 
- 
-
-//         {/* LEFT COLUMN - Today's Schedule & Upcoming */}
-
-//         <div className="col-md-7 d-flex flex-column h-100 overflow-hidden">
 
 
- 
 
-//           {/* TODAY'S SCHEDULE */}
 
-//           <div className="card bg-dark border-secondary border-opacity-25 rounded-4 p-3 flex-grow-1 d-flex flex-column overflow-hidden mb-2" style={{ backgroundColor: '#0d0d0f' }}>
 
-//             <h6 className="fw-bold text-info mb-3" style={{ fontSize: '12px' }}>Today's Schedule</h6>
 
-//             <div className="table-responsive flex-grow-1 overflow-auto">
 
-//               <table className="table table-dark table-hover align-middle mb-0">
-
-//                 <thead className="sticky-top bg-dark">
-
-//                   <tr className="text-secondary small">
-
-//                     <th>TIME</th><th>PATIENT</th><th className="text-end">STATUS</th>
-
-//                   </tr>
-
-//                 </thead>
-
-//                 <tbody style={{ fontSize: '13px' }}>
-
-//                   {!loading && patients.length > 0 ? (
-
-//                     patients.map((p, index) => (
-
-//                       <tr key={p.appointmentId || index} className="border-secondary border-opacity-10">
-
-//                         <td className="text-info fw-bold">{p.time}</td>
-
-//                         <td>{p.name} <small className="text-muted d-block" style={{ fontSize: '10px' }}>{p.token}</small></td>
-
-//                         <td className="text-end">
-
-//                           <span className={`badge rounded-pill border ${p.status === 'WAITING' ? 'border-info text-info' :
-
-//                               p.status === 'NO_SHOW' ? 'border-danger text-danger' : 'border-primary text-primary'
-
-//                             }`} style={{ fontSize: '10px' }}>
-
-//                             {p.status}
-
-//                           </span>
-
-//                         </td>
-
-//                       </tr>
-
-//                     ))
-
-//                   ) : (
-
-//                     <tr>
-
-//                       <td colSpan={3} className="text-center py-5 text-muted">
-
-//                         {loading ? "Loading Schedule..." : "No appointments found for today."}
-
-//                       </td>
-
-//                     </tr>
-
-//                   )}
-
-//                 </tbody>
-
-//               </table>
-
-//             </div>
-
-//           </div>
 
 
  
 
-//           {/* UPCOMING LIST */}
+//  // --- LOGIC (STRICTLY UNTOUCHED) ---
 
-//           <div className="card bg-dark border-0 rounded-4 p-2" style={{ height: '30%', backgroundColor: '#0d0d0f' }}>
 
-//             <h6 className="fw-bold text-secondary mb-2 ps-1" style={{ fontSize: '11px' }}>Upcoming List</h6>
 
-//             <div className="overflow-auto h-100">
-
-//               <table className="table table-dark table-sm mb-0" style={{ fontSize: '11px' }}>
-
-//                 <tbody className="opacity-75">
-
-//                   {upcomingList.map(p => (
-
-//                     <tr key={p.token} className="border-secondary border-opacity-10">
-
-//                       <td className="text-info">{p.token}</td>
-
-//                       <td>{p.name}</td>
-
-//                       <td className="text-end">{p.time}</td>
-
-//                     </tr>
-
-//                   ))}
-
-//                 </tbody>
-
-//               </table>
-
-//             </div>
-
-//           </div>
-
-//         </div>
 
 
  
 
-//         {/* RIGHT COLUMN - Consultation & Queue Cards */}
-
-//         <div className="col-md-5 d-flex flex-column gap-2 h-100 overflow-hidden">
+//  const fetchSchedule = useCallback(async () => {
 
 
- 
 
-//           {/* CURRENT QUEUE CARD */}
-
-//           <div className="card border-0 rounded-4 p-3 shadow-lg" style={{ background: 'linear-gradient(145deg, #161625, #0a0a0c)', border: '1px solid #333' }}>
-
-//             <p className="text-info fw-bold mb-1" style={{ fontSize: '9px', letterSpacing: '1px' }}>CURRENT CONSULTATION</p>
-
-//             {currentPatient ? (
-
-//               <>
-
-//                 <h2 className="fw-bold text-white mb-0">{currentPatient.name}</h2>
-
-//                 <p className="text-info small mb-3">{currentPatient.token} | Status: {currentPatient.status}</p>
 
 
  
 
-//                 <div className="d-flex flex-column gap-2">
+//    setLoading(true);
 
-//                   {currentPatient.status !== 'IN_CONSULTATION' ? (
 
-//                     <>
 
-//                       <button className="btn btn-info btn-sm py-2 rounded-pill fw-bold text-black" onClick={() => updateStatus(currentPatient.token, 'IN_CONSULTATION')}>
-
-//                         START CONSULTATION
-
-//                       </button>
-
-//                       <button
-
-//                         className="btn btn-outline-danger btn-sm py-1 rounded-pill fw-bold"
-
-//                         onClick={() => updateStatus(currentPatient.token, 'NO_SHOW')} // Changed from 'No-Show' to 'NO_SHOW'
-
-//                       >
-
-//                         NO-SHOW
-
-//                       </button>
-
-//                     </>
-
-//                   ) : (
-
-//                     <>
-
-//                       <div className="badge bg-primary py-2 mb-1" style={{ fontSize: '10px' }}>IN CONSULTATION</div>
-
-//                       <button className="btn btn-success btn-sm py-2 rounded-pill fw-bold shadow-glow" onClick={() => updateStatus(currentPatient.token, 'COMPLETED')}>
-
-//                         MARK AS COMPLETED
-
-//                       </button>
-
-//                     </>
-
-//                   )}
-
-//                 </div>
-
-//               </>
-
-//             ) : (
-
-//               <div className="py-4 text-center text-secondary small">Queue Empty</div>
-
-//             )}
-
-//           </div>
 
 
  
 
-//           {/* NEXT QUEUE CARD */}
+//    try {
 
-//           <div className="card border-0 rounded-4 p-2 bg-dark" style={{ border: '1px solid #222' }}>
 
-//             <p className="text-secondary fw-bold mb-1" style={{ fontSize: '9px' }}>NEXT IN LINE</p>
 
-//             {nextPatient ? (
-
-//               <div className="d-flex justify-content-between align-items-center">
-
-//                 <div>
-
-//                   <h6 className="fw-bold mb-0 text-white" style={{ fontSize: '13px' }}>{nextPatient.name}</h6>
-
-//                   <small className="text-info" style={{ fontSize: '10px' }}>{nextPatient.token}</small>
-
-//                 </div>
-
-//                 <span className="badge bg-secondary opacity-50" style={{ fontSize: '9px' }}>{nextPatient.status}</span>
-
-//               </div>
-
-//             ) : <small className="text-muted small">None</small>}
-
-//           </div>
 
 
  
 
-//           {/* COMPLETED TODAY TABLE */}
+//      const response = await axiosInstance.get(`/clinicq/doctor/schedule`);
 
-//           <div className="card border-0 rounded-4 p-2 flex-grow-1 overflow-hidden" style={{ backgroundColor: '#0f0f12' }}>
 
-//             <p className="text-success fw-bold mb-1 ps-1" style={{ fontSize: '10px' }}>COMPLETED TODAY</p>
 
-//             <div className="overflow-auto h-100">
-
-//               <table className="table table-dark table-sm mb-0" style={{ fontSize: '11px' }}>
-
-//                 <tbody className="opacity-50">
-
-//                   {completedToday.map(p => (
-
-//                     <tr key={p.token} className="border-secondary border-opacity-10">
-
-//                       <td className="text-success fw-bold">{p.token}</td>
-
-//                       <td>{p.name}</td>
-
-//                       <td className="text-end">✅</td>
-
-//                     </tr>
-
-//                   ))}
-
-//                 </tbody>
-
-//               </table>
-
-//             </div>
-
-//           </div>
 
 
  
 
-//         </div> {/* End Right Column */}
+//      const mappedData = response.data.map((t: any) => ({
 
-//       </div> {/* End Row */}
 
-//     </div>
 
-//   );
+
+
+ 
+
+//        id: t.id,
+
+
+
+
+
+ 
+
+//        appointmentId: t.appointment?.id,
+
+
+
+
+
+ 
+
+//        token: `TKN-${t.tokenNumber}`,
+
+
+
+
+
+ 
+
+//        name: t.patient?.name || "Unknown Patient",
+
+
+
+
+
+ 
+
+//        time: t.appointment?.timeSlot?.startTime?.substring(0, 5) || "00:00",
+
+
+
+
+
+ 
+
+//        status: t.status
+
+
+
+
+
+ 
+
+//      }));
+
+
+
+
+
+ 
+
+//      setPatients(mappedData);
+
+
+
+
+
+ 
+
+//    } catch (err) {
+
+
+
+
+
+ 
+
+//      console.error("Failed to load schedule", err);
+
+
+
+
+
+ 
+
+//    } finally {
+
+
+
+
+
+ 
+
+//      setLoading(false);
+
+
+
+
+
+ 
+
+//    }
+
+
+
+
+
+ 
+
+//  }, []);
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+//  useEffect(() => { fetchSchedule(); }, [fetchSchedule]);
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+//  const updateStatus = async (tokenString: string, newStatus: string) => {
+
+
+
+
+
+ 
+
+//    const patient = patients.find(p => p.token === tokenString);
+
+
+
+
+
+ 
+
+//    if (!patient) return;
+
+
+
+
+
+ 
+
+//    try {
+
+
+
+
+
+ 
+
+//      await axiosInstance.put(`/clinicq/doctor/token/${patient.id}/status`, null, {
+
+
+
+
+
+ 
+
+//        params: { status: newStatus }
+
+
+
+
+
+ 
+
+//      });
+
+
+
+
+
+ 
+
+//      fetchSchedule();
+
+
+
+
+
+ 
+
+//    } catch (err) {
+
+
+
+
+
+ 
+
+//      console.error("Status update failed:", err);
+
+
+
+
+
+ 
+
+//    }
+
+
+
+
+
+ 
+
+//  };
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+//  const currentPatient = patients.find(p => p.status === 'IN_CONSULTATION') || patients.find(p => p.status === 'WAITING');
+
+
+
+
+
+ 
+
+//  const upcomingList = patients.filter(p => p.status === 'WAITING' && p.appointmentId !== currentPatient?.appointmentId);
+
+
+
+
+
+ 
+
+//  const nextPatient = upcomingList.length > 0 ? upcomingList[0] : null;
+
+
+
+
+
+ 
+
+//  const completedToday = patients.filter(p => p.status === 'COMPLETED');
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+//  return (
+
+
+
+
+
+ 
+
+//    <div className="d-flex min-vh-100 overflow-hidden"
+
+
+
+
+
+ 
+
+//         style={{ background: 'radial-gradient(circle at center, #f8f9fa 0%, #e9ecef 100%)', color: '#212529', fontFamily: "'Segoe UI', Roboto, sans-serif" }}>
+
+
+
+
+
+
+
+
+
+
+ 
+
+//      <style>
+
+
+
+
+
+ 
+
+//        {`
+
+
+
+
+
+ 
+
+//          .glass-panel-dr { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1px solid rgba(0, 0, 0, 0.05); border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.02); }
+
+
+
+
+
+ 
+
+//          .sidebar-dr { width: 260px; background: #ffffff; border-right: 1px solid #eee; display: flex; flex-direction: column; padding: 24px; }
+
+
+
+
+
+ 
+
+//          .nav-btn-dr { width: 100%; text-align: left; padding: 12px 16px; border-radius: 12px; border: none; background: transparent; font-weight: 600; color: #6c757d; margin-bottom: 8px; transition: all 0.2s; }
+
+
+
+
+
+ 
+
+//          .nav-btn-active { background: rgba(32, 201, 151, 0.1); color: #198754; }
+
+
+
+
+
+ 
+
+//          .custom-table-dr thead th { color: #adb5bd; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #f8f9fa; }
+
+
+
+
+
+ 
+
+//          .completed-row { border-bottom: 1px solid #f1f3f5; }
+
+
+
+
+
+ 
+
+//          .shadow-glow { box-shadow: 0 0 15px rgba(32, 201, 151, 0.3); }
+
+
+
+
+
+ 
+
+//          .logout-btn{
+
+
+ 
+
+//            transition: all 0.2s ease;
+
+
+ 
+
+//            border-radius:12px !important;
+
+
+ 
+
+//            background:transparent;
+
+
+ 
+
+//          }
+
+
+ 
+
+//          .logout-btn:hover{
+
+
+ 
+
+//            background:rgba(220,53,69,0.1) !important;
+
+
+ 
+
+//            color: #dc3545 !important;
+
+
+ 
+
+//          }
+
+
+ 
+
+//          .logout-btn:active{
+
+
+ 
+
+//            background: rgba(220,53,69,0.2) !important ;
+
+
+ 
+
+//            transform:scale(0.96);
+
+
+ 
+
+//          }
+
+
+
+
+
+ 
+
+//        `}
+
+
+
+
+
+ 
+
+//      </style>
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+//      {/* --- SIDEBAR --- */}
+
+
+
+
+
+ 
+
+//      <div className="sidebar-dr shadow-sm">
+
+
+
+
+
+ 
+
+//        <div className="d-flex align-items-center mb-5 ps-2">
+
+
+
+
+
+ 
+
+//          <div className="rounded-circle me-3 d-flex align-items-center justify-content-center fw-bold text-white shadow-sm"
+
+
+
+
+
+ 
+
+//               style={{ width: '42px', height: '42px', background: 'linear-gradient(135deg, #0beacb, #20c997)' }}>🩺</div>
+
+
+
+
+
+ 
+
+//          <div>
+
+
+
+
+
+ 
+
+//            <h5 className="mb-0 fw-bold" style={{ color: '#111' }}>ClinicQ <span style={{color: '#20c997'}}>MD</span></h5>
+
+
+
+
+
+ 
+
+//            <small className="text-muted fw-bold" style={{ fontSize: '10px' }}>PHYSICIAN CONSOLE</small>
+
+
+
+
+
+ 
+
+//          </div>
+
+
+
+
+
+ 
+
+//        </div>
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+//        <div className="flex-grow-1">
+
+
+
+
+
+ 
+
+//          <button className="nav-btn-dr nav-btn-active">📅 Today's Queue</button>
+
+
+
+
+
+ 
+
+//          <button className="nav-btn-dr">📝 Prescriptions</button>
+
+
+
+
+
+ 
+
+//          <button className="nav-btn-dr">🕒 History</button>
+
+
+
+
+
+ 
+
+//          <button className={`nav-btn-dr ${breakMode ? 'bg-danger-subtle text-danger' : ''}`} onClick={() => setBreakMode(!breakMode)}>
+
+
+
+
+
+ 
+
+//            {breakMode ? '☕ On Break' : '☕ Break Mode'}
+
+
+
+
+
+ 
+
+//          </button>
+
+
+
+
+
+ 
+
+//          <button className="btn w-100 d-flex align-items-center gap-2 fw-bold logout-btn text-danger border-0 py-3 px-3 ms-auto"
+
+
+ 
+
+//            style={{
+
+
+ 
+
+//              fontSize: '16px',
+
+
+ 
+
+//              display: 'flex',
+
+
+ 
+
+//              alignItems: 'center',
+
+
+ 
+
+//              gap: '8px'
+
+
+ 
+
+//            }}
+
+
+ 
+
+//            onClick={() => window.location.reload()}>📤 Log Out</button>
+
+
+
+
+
+ 
+
+//        </div>
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+//        {/* <div className="mt-auto pt-4 border-top">
+
+
+
+
+
+ 
+
+//          <button className="btn w-100 d-flex align-items-center gap-2 fw-bold logout-btn text-danger border-0 py-2"
+
+
+ 
+
+//          style={{fontSize:'13px'}}
+
+
+ 
+
+//          onClick={() => window.location.reload()}><span>📤</span> Log Out</button>
+
+
+
+
+
+ 
+
+//        </div> */}
+
+
+
+
+
+ 
+
+//      </div>
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+//      {/* --- MAIN AREA --- */}
+
+
+
+
+
+ 
+
+//      <div className="flex-grow-1 p-4 overflow-hidden">
+
+
+
+
+
+ 
+
+//        <div className="row g-4 h-100">
+
+
+
+
+
+
+
+
+
+
+ 
+
+//          {/* LEFT COLUMN: LIVE QUEUE */}
+
+
+
+
+
+ 
+
+//          <div className="col-lg-7 d-flex flex-column h-100">
+
+
+
+
+
+ 
+
+//            <div className="glass-panel-dr p-4 mb-4 d-flex flex-column overflow-hidden" style={{ flex: '2' }}>
+
+
+
+
+
+ 
+
+//              <div className="d-flex justify-content-between align-items-center mb-4">
+
+
+
+
+
+ 
+
+//                <h5 className="fw-bold m-0" style={{ color: '#20c997' }}>Live Patient Queue</h5>
+
+
+
+
+
+ 
+
+//                <span className="badge bg-success-subtle text-success rounded-pill px-3">● Real-time</span>
+
+
+
+
+
+ 
+
+//              </div>
+
+
+
+
+
+ 
+
+//              <div className="table-responsive flex-grow-1 overflow-auto">
+
+
+
+
+
+ 
+
+//                <table className="table custom-table-dr align-middle mb-0">
+
+
+
+
+
+ 
+
+//                  <thead><tr><th>Time</th><th>Patient Identity</th><th className="text-end">Status</th></tr></thead>
+
+
+
+
+
+ 
+
+//                  <tbody>
+
+
+
+
+
+ 
+
+//                    {!loading && patients.map((p, i) => (
+
+
+
+
+
+ 
+
+//                      <tr key={p.id || i}>
+
+
+
+
+
+ 
+
+//                        <td className="fw-bold text-dark">{p.time}</td>
+
+
+
+
+
+ 
+
+//                        <td>
+
+
+
+
+
+ 
+
+//                          <div className="fw-bold" style={{ color: '#2c3e50' }}>{p.name}</div>
+
+
+
+
+
+ 
+
+//                          <small className="text-muted fw-bold" style={{ fontSize: '9px' }}>{p.token}</small>
+
+
+
+
+
+ 
+
+//                        </td>
+
+
+
+
+
+ 
+
+//                        <td className="text-end">
+
+
+
+
+
+ 
+
+//                          <span className={`badge rounded-pill px-3 py-2 border ${p.status === 'WAITING' ? 'bg-info-subtle text-info border-info' : 'bg-primary text-white border-0'}`} style={{ fontSize: '10px' }}>{p.status}</span>
+
+
+
+
+
+ 
+
+//                        </td>
+
+
+
+
+
+ 
+
+//                      </tr>
+
+
+
+
+
+ 
+
+//                    ))}
+
+
+
+
+
+ 
+
+//                  </tbody>
+
+
+
+
+
+ 
+
+//                </table>
+
+
+
+
+
+ 
+
+//              </div>
+
+
+
+
+
+ 
+
+//            </div>
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+//            <div className="glass-panel-dr p-4" style={{ flex: '1' }}>
+
+
+
+
+
+ 
+
+//              <h6 className="fw-bold text-muted small text-uppercase mb-3">Upcoming Appointments</h6>
+
+
+
+
+
+ 
+
+//              <div className="row row-cols-1 row-cols-md-2 g-2 overflow-auto">
+
+
+
+
+
+ 
+
+//                {upcomingList.map(p => (
+
+
+
+
+
+ 
+
+//                  <div className="col" key={p.token}>
+
+
+
+
+
+ 
+
+//                    <div className="p-3 rounded-4 border bg-white shadow-sm d-flex justify-content-between align-items-center">
+
+
+
+
+
+ 
+
+//                      <div>
+
+
+
+
+
+ 
+
+//                        <div className="fw-bold small">{p.name}</div>
+
+
+
+
+
+ 
+
+//                        <small className="text-info fw-bold" style={{fontSize: '9px'}}>{p.token}</small>
+
+
+
+
+
+ 
+
+//                      </div>
+
+
+
+
+
+ 
+
+//                      <div className="text-muted fw-bold small">{p.time}</div>
+
+
+
+
+
+ 
+
+//                    </div>
+
+
+
+
+
+ 
+
+//                  </div>
+
+
+
+
+
+ 
+
+//                ))}
+
+
+
+
+
+ 
+
+//              </div>
+
+
+
+
+
+ 
+
+//            </div>
+
+
+
+
+
+ 
+
+//          </div>
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+//          {/* RIGHT COLUMN: ACTIVE CALL */}
+
+
+
+
+
+ 
+
+//          <div className="col-lg-5 d-flex flex-column gap-3 h-100">
+
+
+
+
+
+ 
+
+//            <div className="p-4 rounded-5 shadow-lg" style={{ background: 'linear-gradient(135deg, #2c3e50, #000000)', color: 'white' }}>
+
+
+
+
+
+ 
+
+//              <small className="fw-bold opacity-50 text-uppercase ls-1">Active Consultation</small>
+
+
+
+
+
+ 
+
+//              {currentPatient ? (
+
+
+
+
+
+ 
+
+//                <div className="mt-4 text-center text-md-start">
+
+
+
+
+
+ 
+
+//                  <h1 className="fw-bold mb-1 display-6">{currentPatient.name}</h1>
+
+
+
+
+
+ 
+
+//                  <div className="badge bg-white bg-opacity-10 text-white rounded-pill border border-white border-opacity-10 mb-4 px-3 py-2">{currentPatient.token}</div>
+
+
+
+
+
+ 
+
+//                  <div className="d-flex flex-column gap-2">
+
+
+
+
+
+ 
+
+//                    {currentPatient.status !== 'IN_CONSULTATION' ? (
+
+
+
+
+
+ 
+
+//                      <>
+
+
+
+
+
+ 
+
+//                        <button className="btn btn-light py-3 rounded-pill fw-bold" onClick={() => updateStatus(currentPatient.token, 'IN_CONSULTATION')}>▶ START CONSULTATION</button>
+
+
+
+
+
+ 
+
+//                        <button className="btn btn-outline-danger py-2 rounded-pill fw-bold border-0 opacity-75" onClick={() => updateStatus(currentPatient.token, 'NO_SHOW')}>Mark No-Show</button>
+
+
+
+
+
+ 
+
+//                      </>
+
+
+
+
+
+ 
+
+//                    ) : (
+
+
+
+
+
+ 
+
+//                      <button className="btn py-3 rounded-pill fw-bold text-white shadow-glow" style={{ background: '#20c997' }} onClick={() => updateStatus(currentPatient.token, 'COMPLETED')}>✓ MARK AS COMPLETED</button>
+
+
+
+
+
+ 
+
+//                    )}
+
+
+
+
+
+ 
+
+//                  </div>
+
+
+
+
+
+ 
+
+//                </div>
+
+
+
+
+
+ 
+
+//              ) : <div className="py-5 text-center opacity-50 italic">Waiting for next patient...</div>}
+
+
+
+
+
+ 
+
+//            </div>
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+//            <div className="glass-panel-dr p-3 d-flex align-items-center justify-content-between border-start border-4 shadow-sm" style={{ borderLeftColor: '#0beacb' }}>
+
+
+
+
+
+ 
+
+//              <div>
+
+
+
+
+
+ 
+
+//                <small className="text-muted fw-bold text-uppercase" style={{ fontSize: '9px' }}>Next in Line</small>
+
+
+
+
+
+ 
+
+//                <h6 className="fw-bold mb-0" style={{ color: '#111' }}>{nextPatient?.name || "No pending queue"}</h6>
+
+
+
+
+
+ 
+
+//              </div>
+
+
+
+
+
+ 
+
+//              {nextPatient && (
+
+
+
+
+
+ 
+
+//                <div className="text-end">
+
+
+
+
+
+ 
+
+//                   <div className="badge bg-light text-dark rounded-pill px-3">{nextPatient.time}</div>
+
+
+
+
+
+ 
+
+//                   <div className="text-info fw-bold d-block mt-1" style={{fontSize: '9px'}}>{nextPatient.token}</div>
+
+
+
+
+
+ 
+
+//                </div>
+
+
+
+
+
+ 
+
+//              )}
+
+
+
+
+
+ 
+
+//            </div>
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+//            <div className="glass-panel-dr p-4 flex-grow-1 overflow-hidden d-flex flex-column">
+
+
+
+
+
+ 
+
+//              <h6 className="fw-bold text-success small text-uppercase mb-3">Completed Today</h6>
+
+
+
+
+
+ 
+
+//              <div className="overflow-auto flex-grow-1">
+
+
+
+
+
+ 
+
+//                <table className="table table-sm align-middle mb-0">
+
+
+
+
+
+ 
+
+//                  <tbody style={{ fontSize: '12px' }}>
+
+
+
+
+
+ 
+
+//                    {completedToday.length > 0 ? (
+
+
+
+
+
+ 
+
+//                      completedToday.map(p => (
+
+
+
+
+
+ 
+
+//                        <tr key={p.token} className="completed-row">
+
+
+
+
+
+ 
+
+//                          <td className="fw-bold text-success py-3" style={{ width: '80px' }}>{p.token}</td>
+
+
+
+
+
+ 
+
+//                          <td className="fw-bold">{p.name}</td>
+
+
+
+
+
+ 
+
+//                          <td className="text-end text-success">✅</td>
+
+
+
+
+
+ 
+
+//                        </tr>
+
+
+
+
+
+ 
+
+//                      ))
+
+
+
+
+
+ 
+
+//                    ) : (
+
+
+
+
+
+ 
+
+//                      <tr><td colSpan={3} className="text-center py-5 text-muted opacity-50 italic">No records yet.</td></tr>
+
+
+
+
+
+ 
+
+//                    )}
+
+
+
+
+
+ 
+
+//                  </tbody>
+
+
+
+
+
+ 
+
+//                </table>
+
+
+
+
+
+ 
+
+//              </div>
+
+
+
+
+
+ 
+
+//            </div>
+
+
+
+
+
+ 
+
+//          </div>
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+//        </div>
+
+
+
+
+
+ 
+
+//      </div>
+
+
+
+
+
+ 
+
+//    </div>
+
+
+
+
+
+ 
+
+//  );
+
+
+
+
+
+ 
 
 // };
 
@@ -514,1135 +1774,921 @@
 
 
 
+
+
  
 
 import React, { useState, useEffect, useCallback } from 'react';
 
-
- 
+import Swal from 'sweetalert2';
 
 import axiosInstance from '../../../services/axiosInstance';
-
-
-
- 
-
-
 
 
  
 
 interface Patient {
 
+ id: number;
 
- 
+ appointmentId: number;
 
-  id: number;
+ token: string;
 
+ name: string;
 
- 
+ time: string;
 
-  appointmentId: number;
+ status: 'COMPLETED' | 'IN_CONSULTATION' | 'WAITING' | 'BOOKED' | 'NO_SHOW';
 
+ age:number | string;
 
- 
-
-  token: string;
-
-
- 
-
-  name: string;
-
-
- 
-
-  time: string;
-
-
- 
-
-  status: 'COMPLETED' | 'IN_CONSULTATION' | 'WAITING' | 'BOOKED' | 'NO_SHOW';
-
-
- 
+ phone: string;
 
 }
 
 
-
  
 
+interface PrescriptionForm {
 
+ diagnosis: string;
+
+ notes: string;
+
+ bloodPressure: string,
+
+  heartRate: string,
+
+ medicines: {
+
+   medicineName: string;
+
+   dosage: string;
+
+   frequency: string;
+
+   duration: string;
+
+ }[];
+
+}
 
 
  
 
 const DoctorDashboard: React.FC = () => {
 
+ const [patients, setPatients] = useState<Patient[]>([]);
 
- 
+ const [loading, setLoading] = useState(true);
 
-  const [patients, setPatients] = useState<Patient[]>([]);
+ const [breakMode, setBreakMode] = useState(false);
 
-
- 
-
-  const [loading, setLoading] = useState(true);
+ const [activeTab, setActiveTab] = useState<'queue' | 'prescription' | 'history'>('queue');
 
 
  
 
-  const [breakMode, setBreakMode] = useState(false);
+ const [prescriptionData, setPrescriptionData] = useState<PrescriptionForm>({
 
+   diagnosis: '',
 
+   notes: '',
 
- 
+   bloodPressure:'',
 
+   heartRate:'',
 
+   medicines: [{ medicineName: '', dosage: '', frequency: '', duration: '' }]
 
-
- 
-
-  // --- LOGIC (STRICTLY UNTOUCHED) ---
-
-
- 
-
-  const fetchSchedule = useCallback(async () => {
+ });
 
 
  
 
-    setLoading(true);
+ // --- LOGIC ---
+
+ const fetchSchedule = useCallback(async () => {
+
+   setLoading(true);
+
+   try {
+
+     const response = await axiosInstance.get(`/clinicq/doctor/schedule`);
+
+     const mappedData = response.data.map((t: any) => ({
+
+       id: t.id,
+
+       appointmentId: t.appointment?.id,
+
+       token: `TKN-${t.tokenNumber}`,
+
+       name: t.patient?.name || "Unknown Patient",
+
+       time: t.appointment?.timeSlot?.startTime?.substring(0, 5) || "00:00",
+
+       status: t.status,
+
+       phone:t.patient?.phone || "N/A",
+
+       age:t.patient?.dateOfBirth?new Date().getFullYear()-new Date(t.patient.dateOfBirth).getFullYear():"N/A"
 
 
  
 
-    try {
+     }));
+
+     setPatients(mappedData);
+
+   } catch (err) {
+
+     console.error("Failed to load schedule", err);
+
+   } finally {
+
+     setLoading(false);
+
+   }
+
+ }, []);
 
 
  
 
-      const response = await axiosInstance.get(`/clinicq/doctor/schedule`);
+ useEffect(() => { fetchSchedule(); }, [fetchSchedule]);
 
 
  
 
-      const mappedData = response.data.map((t: any) => ({
+ const updateStatus = async (tokenString: string, newStatus: string) => {
+
+   const patient = patients.find(p => p.token === tokenString);
+
+   if (!patient) return;
+
+   try {
+
+     await axiosInstance.put(`/clinicq/doctor/token/${patient.id}/status`, null, {
+
+       params: { status: newStatus }
+
+     });
+
+     fetchSchedule();
+
+   } catch (err) {
+
+     console.error("Status update failed:", err);
+
+   }
+
+ };
 
 
  
 
-        id: t.id,
+ const handleAddMedicine = () => {
+
+   setPrescriptionData(prev => ({
+
+     ...prev,
+
+     medicines: [...prev.medicines, { medicineName: '', dosage: '', frequency: '', duration: '' }]
+
+   }));
+
+ };
 
 
  
 
-        appointmentId: t.appointment?.id,
+ const handleRemoveMedicine = (index: number) => {
+
+   const newMedicines = prescriptionData.medicines.filter((_, i) => i !== index);
+
+   setPrescriptionData(prev => ({ ...prev, medicines: newMedicines }));
+
+ };
 
 
  
 
-        token: `TKN-${t.tokenNumber}`,
+ const handleMedicineChange = (index: number, field: string, value: string) => {
+
+  //  const newMedicines = [...prescriptionData.medicines];
+
+  //  (newMedicines[index] as any)[field] = value;
+
+  //  setPrescriptionData(prev => ({ ...prev, medicines: newMedicines }));
+
+  setPrescriptionData(prev=>{
+
+    const newMedicines=[...prev.medicines];
+
+    newMedicines[index]={...newMedicines[index],[field]:value};
+
+    return {...prev,medicines:newMedicines};
+
+  });
+
+ };
 
 
  
 
-        name: t.patient?.name || "Unknown Patient",
+ const submitPrescription = async () => {
 
+   if (!currentPatient || !currentPatient.appointmentId) {
 
- 
+     return Swal.fire('Error', 'No active consultation found for this patient', 'error');
 
-        time: t.appointment?.timeSlot?.startTime?.substring(0, 5) || "00:00",
+   }
 
+   const payload = {
 
- 
+     appointmentId: currentPatient.appointmentId,
 
-        status: t.status
+     diagnosis: prescriptionData.diagnosis  || "No diagnosis provided",
 
+     notes: prescriptionData.notes || "",
 
- 
+     bloodPressure:prescriptionData.bloodPressure || "",
 
-      }));
+     heartRate:prescriptionData.heartRate || "",
 
+     status: "FINAL",
 
- 
+     medicines: prescriptionData.medicines
 
-      setPatients(mappedData);
+     .filter(med=> med.medicineName.trim()!=='')
 
+     .map(med=>({
 
- 
+      medicineName:med.medicineName,
 
-    } catch (err) {
+      dosage:med.dosage || "N/A",
 
+      frequency: med.frequency || "N/A",
 
- 
+      duration:med.duration || "N/A"
 
-      console.error("Failed to load schedule", err);
+     }))
 
+   };
 
- 
+   try {
 
-    } finally {
+     const response=await axiosInstance.post(`/clinicq/doctor/prescription`, payload);
 
+     if(response.status===200 || response.status===201){
 
- 
+      Swal.fire({
 
-      setLoading(false);
+        icon: 'success',
 
+        title: 'Prescription Submitted',
 
- 
+        showConfirmButton: false,
 
-    }
-
-
- 
-
-  }, []);
-
-
-
- 
-
-
-
-
- 
-
-  useEffect(() => { fetchSchedule(); }, [fetchSchedule]);
-
-
-
- 
-
-
-
-
- 
-
-  const updateStatus = async (tokenString: string, newStatus: string) => {
-
-
- 
-
-    const patient = patients.find(p => p.token === tokenString);
-
-
- 
-
-    if (!patient) return;
-
-
- 
-
-    try {
-
-
- 
-
-      await axiosInstance.put(`/clinicq/doctor/token/${patient.id}/status`, null, {
-
-
- 
-
-        params: { status: newStatus }
-
-
- 
+        timer: 1500
 
       });
 
+      setPrescriptionData({
 
- 
+        diagnosis: '',
+
+        notes: '',
+
+        bloodPressure:'',
+
+        heartRate:'',
+
+          medicines: [{ medicineName: '', dosage: '', frequency: '', duration: '' }]
+
+        });
+
+      setActiveTab('queue');
 
       fetchSchedule();
 
+     }
 
- 
-
-    } catch (err) {
-
-
- 
-
-      console.error("Status update failed:", err);
-
-
- 
-
-    }
-
-
- 
-
-  };
-
-
-
- 
-
-
-
-
- 
-
-  const currentPatient = patients.find(p => p.status === 'IN_CONSULTATION') || patients.find(p => p.status === 'WAITING');
-
-
- 
-
-  const upcomingList = patients.filter(p => p.status === 'WAITING' && p.appointmentId !== currentPatient?.appointmentId);
-
-
- 
-
-  const nextPatient = upcomingList.length > 0 ? upcomingList[0] : null;
-
-
- 
-
-  const completedToday = patients.filter(p => p.status === 'COMPLETED');
-
-
-
- 
-
-
-
-
- 
-
-  return (
-
-
- 
-
-    <div className="d-flex min-vh-100 overflow-hidden"
-
-
- 
-
-         style={{ background: 'radial-gradient(circle at center, #f8f9fa 0%, #e9ecef 100%)', color: '#212529', fontFamily: "'Segoe UI', Roboto, sans-serif" }}>
-
-
- 
-
-     
-
-
- 
-
-      <style>
-
-
- 
-
-        {`
-
-
- 
-
-          .glass-panel-dr { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1px solid rgba(0, 0, 0, 0.05); border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.02); }
-
-
- 
-
-          .sidebar-dr { width: 260px; background: #ffffff; border-right: 1px solid #eee; display: flex; flex-direction: column; padding: 24px; }
-
-
- 
-
-          .nav-btn-dr { width: 100%; text-align: left; padding: 12px 16px; border-radius: 12px; border: none; background: transparent; font-weight: 600; color: #6c757d; margin-bottom: 8px; transition: all 0.2s; }
-
-
- 
-
-          .nav-btn-active { background: rgba(32, 201, 151, 0.1); color: #198754; }
-
-
- 
-
-          .custom-table-dr thead th { color: #adb5bd; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #f8f9fa; }
-
-
- 
-
-          .completed-row { border-bottom: 1px solid #f1f3f5; }
-
-
- 
-
-          .shadow-glow { box-shadow: 0 0 15px rgba(32, 201, 151, 0.3); }
-
-
- 
-
-          .logout-btn{
-
-            transition: all 0.2s ease;
-
-            border-radius:12px !important;
-
-            background:transparent;
-
-          }
-
-          .logout-btn:hover{
-
-            background:rgba(220,53,69,0.1) !important;
-
-            color: #dc3545 !important;
-
-          }
-
-          .logout-btn:active{
-
-            background: rgba(220,53,69,0.2) !important ;
-
-            transform:scale(0.96);
-
-          }
-
-
- 
-
-        `}
-
-
- 
-
-      </style>
-
-
-
- 
-
-
-
-
- 
-
-      {/* --- SIDEBAR --- */}
-
-
- 
-
-      <div className="sidebar-dr shadow-sm">
-
-
- 
-
-        <div className="d-flex align-items-center mb-5 ps-2">
-
-
- 
-
-          <div className="rounded-circle me-3 d-flex align-items-center justify-content-center fw-bold text-white shadow-sm"
-
-
- 
-
-               style={{ width: '42px', height: '42px', background: 'linear-gradient(135deg, #0beacb, #20c997)' }}>🩺</div>
-
-
- 
-
-          <div>
-
-
- 
-
-            <h5 className="mb-0 fw-bold" style={{ color: '#111' }}>ClinicQ <span style={{color: '#20c997'}}>MD</span></h5>
-
-
- 
-
-            <small className="text-muted fw-bold" style={{ fontSize: '10px' }}>PHYSICIAN CONSOLE</small>
-
-
- 
-
-          </div>
-
-
- 
-
-        </div>
-
-
-
- 
-
-
-
-
- 
-
-        <div className="flex-grow-1">
-
-
- 
-
-          <button className="nav-btn-dr nav-btn-active">📅 Today's Queue</button>
-
-
- 
-
-          <button className="nav-btn-dr">📝 Prescriptions</button>
-
-
- 
-
-          <button className="nav-btn-dr">🕒 History</button>
-
-
- 
-
-          <button className={`nav-btn-dr ${breakMode ? 'bg-danger-subtle text-danger' : ''}`} onClick={() => setBreakMode(!breakMode)}>
-
+   } catch (err) {
 
- 
-
-            {breakMode ? '☕ On Break' : '☕ Break Mode'}
-
-
- 
-
-          </button>
-
-
- 
-
-          <button className="btn w-100 d-flex align-items-center gap-2 fw-bold logout-btn text-danger border-0 py-3 px-3 ms-auto"
-
-            style={{
-
-              fontSize: '16px',
-
-              display: 'flex',
-
-              alignItems: 'center',
-
-              gap: '8px'
-
-            }}
-
-            onClick={() => window.location.reload()}>📤 Log Out</button>
-
-
- 
-
-        </div>
-
-
-
- 
-
-
-
-
- 
-
-        {/* <div className="mt-auto pt-4 border-top">
-
-
- 
-
-          <button className="btn w-100 d-flex align-items-center gap-2 fw-bold logout-btn text-danger border-0 py-2"
-
-          style={{fontSize:'13px'}}
-
-          onClick={() => window.location.reload()}><span>📤</span> Log Out</button>
-
-
- 
-
-        </div> */}
-
-
- 
-
-      </div>
-
-
-
- 
-
-
-
-
- 
-
-      {/* --- MAIN AREA --- */}
-
-
- 
-
-      <div className="flex-grow-1 p-4 overflow-hidden">
-
-
- 
-
-        <div className="row g-4 h-100">
-
-
- 
-
-           
-
-
- 
-
-          {/* LEFT COLUMN: LIVE QUEUE */}
-
-
- 
-
-          <div className="col-lg-7 d-flex flex-column h-100">
-
-
- 
-
-            <div className="glass-panel-dr p-4 mb-4 d-flex flex-column overflow-hidden" style={{ flex: '2' }}>
-
-
- 
-
-              <div className="d-flex justify-content-between align-items-center mb-4">
-
-
- 
-
-                <h5 className="fw-bold m-0" style={{ color: '#20c997' }}>Live Patient Queue</h5>
-
-
- 
-
-                <span className="badge bg-success-subtle text-success rounded-pill px-3">● Real-time</span>
-
-
- 
-
-              </div>
+     Swal.fire('Error', 'Failed to save prescription', 'error');
 
+   }
 
- 
-
-              <div className="table-responsive flex-grow-1 overflow-auto">
-
-
- 
-
-                <table className="table custom-table-dr align-middle mb-0">
-
-
- 
-
-                  <thead><tr><th>Time</th><th>Patient Identity</th><th className="text-end">Status</th></tr></thead>
-
-
- 
-
-                  <tbody>
-
-
- 
-
-                    {!loading && patients.map((p, i) => (
-
-
- 
-
-                      <tr key={p.id || i}>
-
-
- 
-
-                        <td className="fw-bold text-dark">{p.time}</td>
-
-
- 
-
-                        <td>
+ };
 
 
  
 
-                          <div className="fw-bold" style={{ color: '#2c3e50' }}>{p.name}</div>
+ const currentPatient = patients.find(p => p.status === 'IN_CONSULTATION') || patients.find(p => p.status === 'WAITING');
 
+ const upcomingList = patients.filter(p => p.status === 'WAITING' && p.appointmentId !== currentPatient?.appointmentId);
 
- 
-
-                          <small className="text-muted fw-bold" style={{ fontSize: '9px' }}>{p.token}</small>
-
+ const nextPatient = upcomingList.length > 0 ? upcomingList[0] : null;
 
- 
+ const completedToday = patients.filter(p => p.status === 'COMPLETED');
 
-                        </td>
 
-
  
-
-                        <td className="text-end">
 
+ return (
 
- 
+   <div className="d-flex min-vh-100 overflow-hidden"
 
-                          <span className={`badge rounded-pill px-3 py-2 border ${p.status === 'WAITING' ? 'bg-info-subtle text-info border-info' : 'bg-primary text-white border-0'}`} style={{ fontSize: '10px' }}>{p.status}</span>
+     style={{ background: 'radial-gradient(circle at center, #f8f9fa 0%, #e9ecef 100%)', color: '#212529', fontFamily: "'Segoe UI', Roboto, sans-serif" }}>
 
-
- 
+     <style>
 
-                        </td>
+       {`
 
+         .glass-panel-dr { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(25px); border: 1px solid rgba(0, 0, 0, 0.05); border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.02); }
 
- 
+         .sidebar-dr { width: 260px; background: #ffffff; border-right: 1px solid #eee; display: flex; flex-direction: column; padding: 24px; }
 
-                      </tr>
+         .nav-btn-dr { width: 100%; text-align: left; padding: 12px 16px; border-radius: 12px; border: none; background: transparent; font-weight: 600; color: #6c757d; margin-bottom: 8px; transition: all 0.2s; }
 
+         .nav-btn-active { background: rgba(32, 201, 151, 0.1); color: #198754; }
 
- 
+         .custom-table-dr thead th { color: #adb5bd; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #f8f9fa; }
 
-                    ))}
+         .animate-in { animation: slideUp 0.4s ease-out forwards; }
 
+         @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
- 
+         .form-input-dr { background: white !important; border: 1px solid #eee !important; border-radius: 12px; padding: 12px; transition: 0.3s; }
 
-                  </tbody>
+         .form-input-dr:focus { border-color: #20c997 !important; box-shadow: 0 0 0 4px rgba(32, 201, 151, 0.1) !important; outline: none; }
 
+         .logout-btn{
 
- 
+           transition: all 0.2s ease;
 
-                </table>
+           border-radius:12px !important;
 
+           background:transparent;
 
- 
+         }
 
-              </div>
+         .logout-btn:hover{
 
+           background:rgba(220,53,69,0.1) !important;
 
- 
+           color: #dc3545 !important;
 
-            </div>
+         }
 
+         .logout-btn:active{
 
+           background: rgba(220,53,69,0.2) !important ;
 
- 
+           transform:scale(0.96);
 
+         }
 
+        .btn-delete-med{
 
+          width:40px;
 
- 
+          height:40px;
 
-            <div className="glass-panel-dr p-4" style={{ flex: '1' }}>
+          border-radius:50%;
 
+          border:1px solid rgba(237, 72, 72, 0.1);
 
- 
+          background:rgba(61, 1, 7, 0.05);
 
-              <h6 className="fw-bold text-muted small text-uppercase mb-3">Upcoming Appointments</h6>
+          color:#dc3545;
 
+          display:flex;
 
- 
+          align-items:center;
 
-              <div className="row row-cols-1 row-cols-md-2 g-2 overflow-auto">
+          justify-content:center;
 
+          transition:all 0.2s ease;
 
- 
+          cursor:pointer;
 
-                {upcomingList.map(p => (
+          font-size:14px;
 
+        }
 
- 
+        .btn-delete-med:hover{
 
-                  <div className="col" key={p.token}>
+          background:#dc3545;
 
+          color:white;
 
- 
+          transform:scale(1.1);
 
-                    <div className="p-3 rounded-4 border bg-white shadow-sm d-flex justify-content-between align-items-center">
+          box-shadow:0 4px 10px rgba(241, 66, 84, 0.3);
 
+        }
 
- 
+        .btn-delete-med:active{
 
-                      <div>
+          transform:scale(0.95);
 
+        }
 
- 
+       `}
 
-                        <div className="fw-bold small">{p.name}</div>
+     </style>
 
 
  
 
-                        <small className="text-info fw-bold" style={{fontSize: '9px'}}>{p.token}</small>
+     {/* --- SIDEBAR --- */}
 
+     <div className="sidebar-dr shadow-sm">
 
- 
+       <div className="d-flex align-items-center mb-5 ps-2">
 
-                      </div>
+         <div className="rounded-circle me-3 d-flex align-items-center justify-content-center fw-bold text-white shadow-sm"
 
-
- 
+           style={{ width: '42px', height: '42px', background: 'linear-gradient(135deg, #0beacb, #20c997)' }}>🩺</div>
 
-                      <div className="text-muted fw-bold small">{p.time}</div>
+         <div>
 
+           <h5 className="mb-0 fw-bold">ClinicQ <span style={{ color: '#20c997' }}>MD</span></h5>
 
- 
+           <small className="text-muted fw-bold" style={{ fontSize: '10px' }}>PHYSICIAN CONSOLE</small>
 
-                    </div>
+         </div>
 
+       </div>
 
- 
+       <div className="flex-grow-1">
 
-                  </div>
+         <button onClick={() => setActiveTab('queue')} className={`nav-btn-dr ${activeTab === 'queue' ? 'nav-btn-active' : ''}`}>📅 Today's Queue</button>
 
+         <button onClick={() => setActiveTab('prescription')} className={`nav-btn-dr ${activeTab === 'prescription' ? 'nav-btn-active' : ''}`}>📝 Prescriptions</button>
 
- 
+         <button onClick={() => setActiveTab('history')} className={`nav-btn-dr ${activeTab === 'history' ? 'nav-btn-active' : ''}`}>🕒 History</button>
 
-                ))}
+         <button className={`nav-btn-dr mt-4 ${breakMode ? 'bg-danger-subtle text-danger' : ''}`} onClick={() => setBreakMode(!breakMode)}>
 
+           {breakMode ? '☕ On Break' : '☕ Break Mode'}
 
- 
+         </button>
 
-              </div>
+         {/* <button className="btn w-100 d-flex align-items-center gap-2 fw-bold text-danger border-0 py-3 px-3 mt-auto"
 
+           onClick={() => window.location.reload()}>📤 Log Out</button> */}
 
- 
+           <button className="btn w-100 d-flex align-items-center gap-2 fw-bold logout-btn text-danger border-0 py-3 px-3 ms-auto"
 
-            </div>
+           style={{
 
+             fontSize: '16px',
 
- 
+             display: 'flex',
 
-          </div>
+             alignItems: 'center',
 
+             gap: '8px'
 
+           }}
 
- 
+           onClick={() => window.location.reload()}>📤 Log Out</button>
 
+       </div>
 
+     </div>
 
 
  
-
-          {/* RIGHT COLUMN: ACTIVE CALL */}
-
 
- 
+     {/* --- MAIN AREA --- */}
 
-          <div className="col-lg-5 d-flex flex-column gap-3 h-100">
+     <div className="flex-grow-1 p-4 overflow-hidden">
 
+       {/* ROW for Queue Tab (Split Screen) */}
 
- 
+       {activeTab === 'queue' && (
 
-            <div className="p-4 rounded-5 shadow-lg" style={{ background: 'linear-gradient(135deg, #2c3e50, #000000)', color: 'white' }}>
+         <div className="row g-4 h-100 animate-in">
 
+           {/* LEFT COLUMN: LIVE QUEUE */}
 
- 
+           <div className="col-lg-7 d-flex flex-column h-100">
 
-              <small className="fw-bold opacity-50 text-uppercase ls-1">Active Consultation</small>
+             <div className="glass-panel-dr p-4 mb-4 d-flex flex-column overflow-hidden" style={{ flex: '2' }}>
 
+               <div className="d-flex justify-content-between align-items-center mb-4">
 
- 
+                 <h5 className="fw-bold m-0" style={{ color: '#20c997' }}>Live Patient Queue</h5>
 
-              {currentPatient ? (
+                 <span className="badge bg-success-subtle text-success rounded-pill px-3">● Real-time</span>
 
+               </div>
 
- 
+               <div className="table-responsive flex-grow-1 overflow-auto">
 
-                <div className="mt-4 text-center text-md-start">
+                 <table className="table custom-table-dr align-middle mb-0">
 
+                   <thead><tr><th>Time</th><th>Patient Identity</th><th className="text-end">Status</th></tr></thead>
 
- 
+                   <tbody>
 
-                  <h1 className="fw-bold mb-1 display-6">{currentPatient.name}</h1>
+                     {!loading && patients.map((p, i) => (
 
+                       <tr key={p.id || i}>
 
- 
+                         <td className="fw-bold text-dark">{p.time}</td>
 
-                  <div className="badge bg-white bg-opacity-10 text-white rounded-pill border border-white border-opacity-10 mb-4 px-3 py-2">{currentPatient.token}</div>
+                         <td>
 
+                           <div className="fw-bold" style={{ color: '#2c3e50' }}>{p.name}</div>
 
- 
+                           <small className="text-muted fw-bold" style={{ fontSize: '9px' }}>{p.token}</small>
 
-                  <div className="d-flex flex-column gap-2">
+                         </td>
 
+                         <td className="text-end">
 
- 
+                           <span className={`badge rounded-pill px-3 py-2 border ${p.status === 'WAITING' ? 'bg-info-subtle text-info border-info' : 'bg-primary text-white border-0'}`} style={{ fontSize: '10px' }}>{p.status}</span>
 
-                    {currentPatient.status !== 'IN_CONSULTATION' ? (
+                         </td>
 
+                       </tr>
 
- 
+                     ))}
 
-                      <>
+                   </tbody>
 
+                 </table>
 
- 
+               </div>
 
-                        <button className="btn btn-light py-3 rounded-pill fw-bold" onClick={() => updateStatus(currentPatient.token, 'IN_CONSULTATION')}>▶ START CONSULTATION</button>
+             </div>
 
 
  
-
-                        <button className="btn btn-outline-danger py-2 rounded-pill fw-bold border-0 opacity-75" onClick={() => updateStatus(currentPatient.token, 'NO_SHOW')}>Mark No-Show</button>
 
+             <div className="glass-panel-dr p-4" style={{ flex: '1' }}>
 
- 
+               <h6 className="fw-bold text-muted small text-uppercase mb-3">Upcoming Appointments</h6>
 
-                      </>
+               <div className="row row-cols-1 row-cols-md-2 g-2 overflow-auto">
 
-
- 
+                 {upcomingList.map(p => (
 
-                    ) : (
+                   <div className="col" key={p.token}>
 
+                     <div className="p-3 rounded-4 border bg-white shadow-sm d-flex justify-content-between align-items-center">
 
- 
+                       <div>
 
-                      <button className="btn py-3 rounded-pill fw-bold text-white shadow-glow" style={{ background: '#20c997' }} onClick={() => updateStatus(currentPatient.token, 'COMPLETED')}>✓ MARK AS COMPLETED</button>
+                         <div className="fw-bold small">{p.name}</div>
 
+                         <small className="text-info fw-bold" style={{ fontSize: '9px' }}>{p.token}</small>
 
- 
+                       </div>
 
-                    )}
+                       <div className="text-muted fw-bold small">{p.time}</div>
 
+                     </div>
 
- 
+                   </div>
 
-                  </div>
+                 ))}
 
+               </div>
 
- 
+             </div>
 
-                </div>
+           </div>
 
 
  
 
-              ) : <div className="py-5 text-center opacity-50 italic">Waiting for next patient...</div>}
+           {/* RIGHT COLUMN: ACTIVE CALL */}
 
+           <div className="col-lg-5 d-flex flex-column gap-3 h-100">
 
- 
+             <div className="p-4 rounded-5 shadow-lg" style={{ background: 'linear-gradient(135deg, #2c3e50, #000000)', color: 'white' }}>
 
-            </div>
+               <small className="fw-bold opacity-50 text-uppercase ls-1">Active Consultation</small>
 
+               {currentPatient ? (
 
+                 <div className="mt-4 text-center text-md-start">
 
- 
+                   <h1 className="fw-bold mb-1 display-6">{currentPatient.name}</h1>
 
+                   <div className="badge bg-white bg-opacity-10 text-white rounded-pill border border-white border-opacity-10 mb-4 px-3 py-2">{currentPatient.token}</div>
 
+                   <div className="d-flex flex-column gap-2">
 
+                     {currentPatient.status !== 'IN_CONSULTATION' ? (
 
- 
+                       <>
 
-            <div className="glass-panel-dr p-3 d-flex align-items-center justify-content-between border-start border-4 shadow-sm" style={{ borderLeftColor: '#0beacb' }}>
+                         <button className="btn btn-light py-3 rounded-pill fw-bold" onClick={() => updateStatus(currentPatient.token, 'IN_CONSULTATION')}>▶ START CONSULTATION</button>
 
+                         <button className="btn btn-outline-danger py-2 rounded-pill fw-bold border-0 opacity-75" onClick={() => updateStatus(currentPatient.token, 'NO_SHOW')}>Mark No-Show</button>
 
- 
+                       </>
 
-              <div>
+                     ) : (
 
+                       <button className="btn py-3 rounded-pill fw-bold text-white shadow-glow" style={{ background: '#20c997' }} onClick={() => updateStatus(currentPatient.token, 'COMPLETED')}>✓ MARK AS COMPLETED</button>
 
- 
+                     )}
 
-                <small className="text-muted fw-bold text-uppercase" style={{ fontSize: '9px' }}>Next in Line</small>
+                   </div>
 
+                 </div>
 
- 
+               ) : <div className="py-5 text-center opacity-50 italic">Waiting for next patient...</div>}
 
-                <h6 className="fw-bold mb-0" style={{ color: '#111' }}>{nextPatient?.name || "No pending queue"}</h6>
+             </div>
 
 
  
-
-              </div>
-
 
- 
+             <div className="glass-panel-dr p-3 d-flex align-items-center justify-content-between border-start border-4 shadow-sm" style={{ borderLeftColor: '#0beacb' }}>
 
-              {nextPatient && (
+               <div>
 
+                 <small className="text-muted fw-bold text-uppercase" style={{ fontSize: '9px' }}>Next in Line</small>
 
- 
+                 <h6 className="fw-bold mb-0" style={{ color: '#111' }}>{nextPatient?.name || "No pending queue"}</h6>
 
-                <div className="text-end">
+               </div>
 
+               {nextPatient && (
 
- 
+                 <div className="text-end">
 
                    <div className="badge bg-light text-dark rounded-pill px-3">{nextPatient.time}</div>
 
+                   <div className="text-info fw-bold d-block mt-1" style={{ fontSize: '9px' }}>{nextPatient.token}</div>
 
- 
+                 </div>
 
-                   <div className="text-info fw-bold d-block mt-1" style={{fontSize: '9px'}}>{nextPatient.token}</div>
+               )}
 
+             </div>
 
- 
+             <div className="glass-panel-dr p-4 flex-grow-1 overflow-hidden d-flex flex-column">
 
-                </div>
+               <h6 className="fw-bold text-success small text-uppercase mb-3">Completed Today</h6>
 
+               <div className="overflow-auto flex-grow-1">
 
- 
+                 <table className="table table-sm align-middle mb-0">
 
-              )}
+                   <tbody style={{ fontSize: '12px' }}>
 
+                     {completedToday.length > 0 ? (
 
- 
+                       completedToday.map(p => (
 
-            </div>
+                         <tr key={p.token} className="completed-row">
 
+                           <td className="fw-bold text-success py-3" style={{ width: '80px' }}>{p.token}</td>
 
+                           <td className="fw-bold">{p.name}</td>
 
- 
+                           <td className="text-end text-success">✅</td>
 
+                         </tr>
 
+                       ))
 
+                     ) : (
 
- 
+                       <tr><td colSpan={3} className="text-center py-5 text-muted opacity-50 italic">No records yet.</td></tr>
 
-            <div className="glass-panel-dr p-4 flex-grow-1 overflow-hidden d-flex flex-column">
+                     )}
 
+                   </tbody>
 
- 
+                 </table>
 
-              <h6 className="fw-bold text-success small text-uppercase mb-3">Completed Today</h6>
+               </div>
 
+             </div>
 
- 
+           </div>
 
-              <div className="overflow-auto flex-grow-1">
+         </div>
 
-
- 
-
-                <table className="table table-sm align-middle mb-0">
-
-
- 
-
-                  <tbody style={{ fontSize: '12px' }}>
-
-
- 
-
-                    {completedToday.length > 0 ? (
+       )}
 
 
  
 
-                      completedToday.map(p => (
+       {/* PRESCRIPTION TAB (Full Width) */}
+
+       {activeTab === 'prescription' && (
+
+         <div className="glass-panel-dr p-5 d-flex flex-column overflow-auto h-100 animate-in">
+
+           <div className="d-flex justify-content-between align-items-center mb-4">
+
+             <h4 className="fw-bold m-0" style={{ color: '#20c997' }}>Digital Prescription</h4>
+
+             <button className="btn btn-sm btn-outline-secondary rounded-pill px-3" onClick={() => setActiveTab('queue')}>← Close</button>
+
+           </div>
+
+           <div className="p-4 rounded-4 mb-4 d-flex justify-content-between align-items-center shadow-sm"
+
+             style={{ background: 'linear-gradient(135deg, #20c997, #0beacb)', color: 'white' }}>
+
+             <div>
+
+               <h5 className="fw-bold mb-0">{currentPatient?.name || "Select a Patient"}</h5>
+
+               <small className="opacity-75">Age: {currentPatient?.age || "N/A"} Years</small>
+
+             </div>
+
+             <div className="text-end">
+
+               <small className="opacity-75 d-block">Contact Number</small>
+
+               <span className="fw-bold">{currentPatient?.phone || "N/A"}</span>
+
+             </div>
+
+           </div>
+
+           <div className="row g-3 mb-4">
+
+             <div className="col-md-6">
+
+               <label className="small fw-bold text-muted mb-2">DIAGNOSIS</label>
+
+               <textarea className="form-control form-input-dr" rows={2} placeholder="Type diagnosis here..." value={prescriptionData.diagnosis} onChange={(e) => setPrescriptionData(prev => ({ ...prev, diagnosis: e.target.value }))} />
+
+             </div>
+
+             <div className="col-md-6">
+
+               <label className="small fw-bold text-muted mb-2">ADVICE / NOTES</label>
+
+               <textarea className="form-control form-input-dr" rows={2} placeholder="Additional instructions..." value={prescriptionData.notes} onChange={(e) => setPrescriptionData(prev => ({ ...prev, notes: e.target.value }))} />
+
+             </div>
 
 
  
 
-                        <tr key={p.token} className="completed-row">
+           </div>
 
+           <div className="row g-3 mb-4">
 
- 
+            <div className='col-md-6'>
 
-                          <td className="fw-bold text-success py-3" style={{ width: '80px' }}>{p.token}</td>
+              <label className="small fw-bold text-muted mb-2 text-uppercase">Blood pressure</label>
 
+             <div className="input-group shadow-sm rounded-3 overflow-hidden">
 
- 
+               <input type='text' className="form-control form-input-dr border-0" placeholder="e.g. 120/80" value={prescriptionData.bloodPressure} onChange={(e) => setPrescriptionData(prev => ({ ...prev, bloodPressure: e.target.value }))} />
 
-                          <td className="fw-bold">{p.name}</td>
-
-
- 
-
-                          <td className="text-end text-success">✅</td>
-
-
- 
-
-                        </tr>
-
-
- 
-
-                      ))
-
-
- 
-
-                    ) : (
-
-
- 
-
-                      <tr><td colSpan={3} className="text-center py-5 text-muted opacity-50 italic">No records yet.</td></tr>
-
-
- 
-
-                    )}
-
-
- 
-
-                  </tbody>
-
-
- 
-
-                </table>
-
-
- 
+               <span className="input-group-text bg-white border-0 text-muted small">mmHg</span>
 
               </div>
 
+             </div>
+
+             <div className="col-md-6">
+
+               <label className="small fw-bold text-muted mb-2 text-uppercase">Heart Rate</label>
+
+               <div className='input-group shadow-sm rounded-3 overflow-hidden'>
+
+               <input type="text" className="form-control form-input-dr border-0" placeholder="e.g. 72" value={prescriptionData.heartRate} onChange={(e) => setPrescriptionData(prev => ({ ...prev, heartRate: e.target.value }))} />
+
+               <span className='input-group-text bg-white border-0 text-muted small'>BPM</span>
+
 
  
+
+             </div>
 
             </div>
 
+           </div>
+
+           <div className="d-flex justify-content-between align-items-center mb-3">
+
+             <h6 className="fw-bold text-muted m-0">MEDICATIONS</h6>
+
+             <button className="btn btn-sm text-white rounded-pill px-3 fw-bold shadow-sm" style={{ background: '#20c997' }} onClick={handleAddMedicine}>+ Add Medicine</button>
+
+           </div>
+
+           <div className="table-responsive mb-4">
+
+             <table className="table table-borderless align-middle">
+
+               <thead>
+
+                 <tr className="text-muted small">
+
+                   <th>MEDICINE NAME</th><th>DOSAGE</th><th>FREQUENCY</th><th>DURATION</th><th></th>
+
+                 </tr>
+
+               </thead>
+
+               <tbody>
+
+                 {prescriptionData.medicines.map((med, idx) => (
+
+                   <tr key={idx} className="animate-in">
+
+                     <td><input type="text" className="form-control form-input-dr py-2" placeholder="Name" value={med.medicineName} onChange={(e) => handleMedicineChange(idx, 'medicineName', e.target.value)} /></td>
+
+                     <td><input type="text" className="form-control form-input-dr py-2" placeholder="500mg" value={med.dosage} onChange={(e) => handleMedicineChange(idx, 'dosage', e.target.value)} /></td>
+
+                     <td><input type="text" className="form-control form-input-dr py-2" placeholder="1-1-1" value={med.frequency} onChange={(e) => handleMedicineChange(idx, 'frequency', e.target.value)} /></td>
+
+                     <td><input type="text" className="form-control form-input-dr py-2" placeholder="5d" value={med.duration} onChange={(e) => handleMedicineChange(idx, 'duration', e.target.value)} /></td>
+
+                     <td><button className="btn-delete-med mx-auto" title='Remove Medicine' onClick={() => handleRemoveMedicine(idx)}>🗑️</button></td>
+
+                   </tr>
+
+                 ))}
+
+               </tbody>
+
+             </table>
+
+           </div>
+
+           <div className="d-flex gap-3 justify-content-end mt-auto">
+
+             <button className="btn btn-light rounded-pill px-5 fw-bold" onClick={() => setPrescriptionData({ diagnosis: '', notes: '',bloodPressure:'',heartRate:'', medicines: [{ medicineName: '', dosage: '', frequency: '', duration: '' }] })}>RESET</button>
+
+             <button
+
+             className="btn text-white rounded-pill px-5 fw-bold shadow-glow"
+
+             style={{
+
+              background: currentPatient?.status==='IN_CONSULTATION'?'#20c997':'#adb5bd',
+
+              cursor:currentPatient?.status==='IN_CONSULTATION'?'pointer':'not-allowed'
+
+            }}
+
+            disabled={currentPatient?.status!== 'IN_CONSULTATION'}
+
+            onClick={submitPrescription}>SUBMIT PRESCRIPTION</button>
+
+           </div>
+
+         </div>
+
+       )}
+
 
  
 
-          </div>
+       {/* HISTORY TAB */}
 
+       {activeTab === 'history' && (
 
+         <div className="glass-panel-dr p-5 d-flex flex-column align-items-center justify-content-center h-100 animate-in text-center">
 
- 
+           <span style={{ fontSize: '3rem' }}>🕒</span>
 
+           <h4 className="fw-bold mt-3">Consultation History</h4>
 
+           <p className="text-muted">Archives are currently being synchronized.</p>
 
+           <button className="btn btn-success rounded-pill px-4 mt-2" onClick={() => setActiveTab('queue')}>Return to Dashboard</button>
 
- 
+         </div>
 
-        </div>
+       )}
 
+     </div>
 
- 
+   </div>
 
-      </div>
-
-
- 
-
-    </div>
-
-
- 
-
-  );
-
-
- 
+ );
 
 };
-
-
-
- 
-
-
 
 
  
 
 export default DoctorDashboard;
+
+
+ 

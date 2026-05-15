@@ -512,6 +512,7 @@ import DoctorLogin from './components/pages/doctor/DoctorLogin';
 
 import DoctorDashboard from './components/pages/doctor/DoctorDashboard';
 
+import PatientToken from './components/pages/patient/PatientToken';
 
 
  
@@ -556,7 +557,7 @@ function App() {
 
  
 
-  const [patientSubView, setPatientSubView] = useState<'book' | 'my' | 'history'>('book');
+  const [patientSubView, setPatientSubView] = useState<'book' | 'my' | 'history' | 'token'>('book');
 
 
 
@@ -1759,6 +1760,11 @@ function App() {
  
 
         {patientSubView === 'history' && <PastHistory onNavigate={setPatientSubView} />}
+
+
+ 
+
+        {patientSubView === 'token' && <PatientToken onNavigate={setPatientSubView}/>}
 
 
  

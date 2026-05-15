@@ -67,7 +67,8 @@
 
 //     if (inConsultation.length > 0) return inConsultation[0];
 
-   
+
+ 
 
 //     const waiting = getPatientsByDoctorAndStatus(doctorId, 'WAITING');
 
@@ -128,7 +129,8 @@
 
 //             const nextPatients = getNextPatients(doctor.id, currentPatient?.id);
 
-           
+
+ 
 
 //             return (
 
@@ -278,7 +280,8 @@
 
 //         }
 
-       
+
+ 
 
 //         .display-4 {
 
@@ -286,7 +289,8 @@
 
 //         }
 
-       
+
+ 
 
 //         @keyframes pulse {
 
@@ -298,7 +302,8 @@
 
 //         }
 
-       
+
+ 
 
 //         .text-info {
 
@@ -333,9 +338,6 @@ import { Patient, Doctor } from './ReceptionistDashboard';
 
 
 
- 
-
-
 
 
  
@@ -359,9 +361,6 @@ interface NowServingProps {
 
 
 
- 
-
-
 
 
  
@@ -373,9 +372,6 @@ const NowServing: React.FC<NowServingProps> = ({ patients, doctors }) => {
 
   const [currentTime, setCurrentTime] = useState(new Date());
 
-
-
- 
 
 
 
@@ -416,9 +412,6 @@ const NowServing: React.FC<NowServingProps> = ({ patients, doctors }) => {
 
 
 
- 
-
-
 
 
  
@@ -450,9 +443,6 @@ const NowServing: React.FC<NowServingProps> = ({ patients, doctors }) => {
 
   };
 
-
-
- 
 
 
 
@@ -488,9 +478,6 @@ const NowServing: React.FC<NowServingProps> = ({ patients, doctors }) => {
 
 
 
- 
-
-
 
 
  
@@ -524,9 +511,6 @@ const NowServing: React.FC<NowServingProps> = ({ patients, doctors }) => {
 
 
 
- 
-
-
 
 
  
@@ -541,32 +525,29 @@ const NowServing: React.FC<NowServingProps> = ({ patients, doctors }) => {
 
  
 
-         style={{
+      style={{
 
 
  
 
-           background: 'radial-gradient(circle at center, #f8f9fa 0%, #e9ecef 100%)',
+        background: 'radial-gradient(circle at center, #f8f9fa 0%, #e9ecef 100%)',
 
 
  
 
-           color: '#212529',
+        color: '#212529',
 
 
  
 
-           fontFamily: "'Segoe UI', Roboto, sans-serif"
+        fontFamily: "'Segoe UI', Roboto, sans-serif"
 
 
  
 
-         }}>
+      }}>
 
 
- 
-
-     
 
 
  
@@ -765,9 +746,6 @@ const NowServing: React.FC<NowServingProps> = ({ patients, doctors }) => {
 
 
 
- 
-
-
 
 
  
@@ -826,9 +804,6 @@ const NowServing: React.FC<NowServingProps> = ({ patients, doctors }) => {
 
 
 
- 
-
-
 
 
  
@@ -861,9 +836,6 @@ const NowServing: React.FC<NowServingProps> = ({ patients, doctors }) => {
             const nextPatients = getNextPatients(doctor.id, currentPatient?.id);
 
 
- 
-
-           
 
 
  
@@ -917,9 +889,6 @@ const NowServing: React.FC<NowServingProps> = ({ patients, doctors }) => {
 
 
 
- 
-
-
 
 
  
@@ -939,7 +908,7 @@ const NowServing: React.FC<NowServingProps> = ({ patients, doctors }) => {
 
  
 
-                         style={{ background: 'rgba(242, 153, 74, 0.05)', border: '1px solid rgba(242, 153, 74, 0.1)' }}>
+                      style={{ background: 'rgba(242, 153, 74, 0.05)', border: '1px solid rgba(242, 153, 74, 0.1)' }}>
 
 
  
@@ -1013,9 +982,6 @@ const NowServing: React.FC<NowServingProps> = ({ patients, doctors }) => {
 
 
 
- 
-
-
 
 
  
@@ -1065,7 +1031,7 @@ const NowServing: React.FC<NowServingProps> = ({ patients, doctors }) => {
 
  
 
-                                      style={{ width: '24px', height: '24px', fontSize: '10px' }}>
+                                  style={{ width: '24px', height: '24px', fontSize: '10px' }}>
 
 
  
@@ -1199,9 +1165,6 @@ const NowServing: React.FC<NowServingProps> = ({ patients, doctors }) => {
 
 
 
- 
-
-
 
 
  
@@ -1255,14 +1218,14 @@ const NowServing: React.FC<NowServingProps> = ({ patients, doctors }) => {
 
 
 
- 
-
-
 
 
  
 
 export default NowServing;
+
+
+
 
 
  

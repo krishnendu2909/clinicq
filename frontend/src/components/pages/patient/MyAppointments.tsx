@@ -311,7 +311,7 @@ interface MyProps {
 
  
 
-  onNavigate: (tab: 'book' | 'my' | 'history') => void;
+  onNavigate: (tab: 'book' | 'my' | 'history' | 'token') => void;
 
 
  
@@ -354,68 +354,29 @@ const MyAppointments: React.FC<MyProps> = ({ onNavigate, onReturnHome }) => {
 
   useEffect(() => {
 
-
- 
-
     const fetchAllAppointments = async () => {
-
-
- 
 
       try {
 
-
- 
-
         const response = await axiosInstance.get(`/clinicq/patient/appointments`);
-
-
- 
 
         setAppointments(response.data);
 
-
- 
-
       } catch (err) {
-
-
- 
 
         console.error("error fetching all appointments");
 
-
- 
-
       } finally {
-
-
- 
 
         setLoading(false);
 
-
- 
-
       }
-
-
- 
 
     };
 
-
- 
-
     fetchAllAppointments();
 
-
- 
-
   }, []);
-
-
-
 
 
  
@@ -679,8 +640,9 @@ const MyAppointments: React.FC<MyProps> = ({ onNavigate, onReturnHome }) => {
 
           <button onClick={() => onNavigate('history')} className="btn text-start py-2 px-3 border-0 text-muted fw-medium">🕒 History</button>
 
+          <button onClick={() => onNavigate('token')} className="btn text-start py-2 px-3 border-0 text-muted fw-medium">🎟️ Token No</button>
 
- 
+         
 
           <div className="mt-auto pt-4 border-top">
 
@@ -866,48 +828,23 @@ const MyAppointments: React.FC<MyProps> = ({ onNavigate, onReturnHome }) => {
 
                     <div className="col-md-4 p-4 d-flex align-items-center justify-content-center position-relative">
 
-
- 
-
                       <div className="ticket-divider d-none d-md-block position-absolute start-0"></div>
-
-
- 
 
                       <div className="text-center">
 
-
- 
-
-                        <div className="fw-bold fs-4 mb-1" style={{ color: '#111' }}>{app.timeSlot?.slotDate}</div>
-
-
- 
+                        <div className="fw-bold fs-4 mb-1" style={{ color: '#111' }}>{app.timeSlot?.slotDate || (app.createdAt?app.createdAt.split('T')[0]:'N/A')}</div>
 
                         <div className="badge px-3 py-2 rounded-pill" style={{ background: 'rgba(0,0,0,0.05)', color: '#495057', fontSize: '0.9rem' }}>
 
+                          🕒 {app.timeSlot?.startTime
 
- 
-
-                          🕒 {app.timeSlot?.startTime?.substring(0, 5)}
-
-
- 
+                          ? app.timeSlot.startTime.substring(0,5):(app.createdAt && app.createdAt.includes('T')? app.createdAt.split('T')[1].substring(0,5):'N/A')}
 
                         </div>
 
-
- 
-
                       </div>
 
-
- 
-
                       <div className="ticket-divider d-none d-md-block position-absolute end-0"></div>
-
-
- 
 
                     </div>
 
@@ -1131,3 +1068,4 @@ const MyAppointments: React.FC<MyProps> = ({ onNavigate, onReturnHome }) => {
  
 
 export default MyAppointments;
+

@@ -86,9 +86,6 @@ import React from 'react';
 
 
 
- 
-
-
 
 
  
@@ -103,16 +100,13 @@ interface NavbarProps {
 
  
 
-    onNavigate: (tab: 'book' | 'my' | 'history') => void;
+    onNavigate: (tab: 'book' | 'my' | 'history' | 'token') => void;
 
 
  
 
 }
 
-
-
- 
 
 
 
@@ -248,9 +242,6 @@ const PatientNavbar: React.FC<NavbarProps> = ({ activeTab, onNavigate }) => {
 
 
 
- 
-
-
 
 
  
@@ -272,9 +263,6 @@ const PatientNavbar: React.FC<NavbarProps> = ({ activeTab, onNavigate }) => {
 
                 </button>
 
-
-
- 
 
 
 
@@ -436,7 +424,70 @@ const PatientNavbar: React.FC<NavbarProps> = ({ activeTab, onNavigate }) => {
 
  
 
-                       
+                        {/* 3. HISTORY TAB */}
+
+                        <li className="nav-item">
+
+                            <button
+
+                                className="nav-link btn border-0 px-3 py-2"
+
+                                onClick={() => onNavigate('history')}
+
+                                style={{
+
+                                    borderRadius: '10px',
+
+                                    transition: 'all 0.3s ease',
+
+                                    color: activeTab === 'history' ? '#ff7e5f' : '#6c757d',
+
+                                    fontWeight: activeTab === 'history' ? '700' : '500',
+
+                                    background: activeTab === 'history' ? 'rgba(255, 126, 95, 0.08)' : 'transparent'
+
+                                }}>
+
+                                🕒 History
+
+                            </button>
+
+                        </li>
+
+
+ 
+
+                        {/* 4. TOKEN NO TAB */}
+
+                        <li className="nav-item">
+
+                            <button
+
+                                className="nav-link btn border-0 px-3 py-2"
+
+                                onClick={() => onNavigate('token')}
+
+                                style={{
+
+                                    borderRadius: '10px',
+
+                                    transition: 'all 0.3s ease',
+
+                                    color: activeTab === 'token' ? '#ff7e5f' : '#6c757d',
+
+                                    fontWeight: activeTab === 'token' ? '700' : '500',
+
+                                    background: activeTab === 'token' ? 'rgba(255, 126, 95, 0.08)' : 'transparent'
+
+                                }}>
+
+                                🎟️ Token No
+
+                            </button>
+
+                        </li>
+
+
 
 
  
@@ -548,9 +599,6 @@ const PatientNavbar: React.FC<NavbarProps> = ({ activeTab, onNavigate }) => {
 
 };
 
-
-
- 
 
 
 
