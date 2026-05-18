@@ -220,19 +220,20 @@ import React, { useState } from 'react';
 
 import { FaArrowLeft } from 'react-icons/fa';
 
-
- 
+import { useNavigate } from 'react-router-dom';
 
 interface LoginProps {
 
-    onLogin: () => void;
+    // onLogin: () => void;
 
 }
 
 
  
 
-const Login: React.FC<LoginProps> = ({ onLogin }) => {
+const Login: React.FC<LoginProps> = () => {
+
+    const navigate=useNavigate();
 
     const [email, setEmail] = useState('');
 
@@ -371,77 +372,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
     };
 
-
- 
-
-    // const handleForgotPassword = async (e: React.FormEvent) => {
-
-    //     e.preventDefault();
-
-    //     setAttempts(0);
-
-    //     setMessage("");
-
-    //     const formData = new URLSearchParams();
-
-    //     formData.append('email', email);
-
-    //     try {
-
-    //         const response = await axios.post('http://localhost:8080/clinicq/auth/forgot-password',
-
-    //             formData.toString(),
-
-    //             { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
-
-    //         );
-
-    //         setToken(response.data);
-
-    //         //setMessage('Token generated successfully. Please enter your new password');
-
-    //         setShowResetPassword(true);
-
-    //     } catch (error) {
-
-    //         console.error('Forgot Password error:', error);
-
-    //         setMessage('Failed to send email. Please check your email address');
-
-    //     }
-
-    // };
-
-    // const handleResetSubmit = async (e: React.FormEvent) => {
-
-    //     e.preventDefault();
-
-    //     if (newPassword !== confirmPassword) {
-
-    //         alert("Passwords do not match!");
-
-    //         return;
-
-    //     }
-
-    //     try {
-
-    //         const response = await axios.post(`http://localhost:8080/clinicq/auth/reset-password?token=${token}&newPassword=${newPassword}`);
-
-    //         setMessage(response.data);
-
-    //         setShowResetPassword(false);
-
-    //     } catch (error) {
-
-    //         console.error('Reset Password error: ', error);
-
-    //         setMessage('Failed to update password.');
-
-    //     }
-
-    // };
-
     const handleResetSubmit = async (e: React.FormEvent) => {
 
         e.preventDefault();
@@ -470,9 +400,13 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
             setConfirmPassword('');
 
-        } catch (error) {
+            setMessage("");
 
-            Swal.fire("Error", "Invalid OTP or request failed.", "error");
+        } catch (error: any) {
+
+            const serverMessage = error.response?.data?.errorMessage || "Failed to update password.";
+
+            Swal.fire("Error", serverMessage, "error");
 
         }
 
@@ -515,7 +449,9 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
             setMessage("Login successful");
 
-            onLogin();
+            navigate('/admin');
+
+            // onLogin();
 
         }
 
@@ -949,13 +885,69 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
  
 
-                                            <button
+                                            {/* <button
 
                                                 className="btn btn-coral w-100 py-3 rounded-pill fw-bold mb-2"
 
                                                 onClick={() => { setIsOtpVerified(true); setMessage(""); }}
 
                                                 disabled={otp.some(digit => digit === "")}
+
+                                            >
+
+                                                VERIFY & PROCEED
+
+                                            </button> */}
+
+                                            <button
+
+                                                className="btn btn-coral w-100 py-3 rounded-pill fw-bold mb-2"
+
+                                                type="button"
+
+                                                disabled={otp.some(digit => digit === "") || isSendingEmail}
+
+                                                onClick={async () => {
+
+                                                    const finalOtp = otp.join('');
+
+                                                    try {
+
+                                                        // Call the brand new endpoint that doesn't consume the token
+
+                                                        await axios.get(`http://localhost:8080/clinicq/auth/verify-token?token=${finalOtp}`);
+
+                                                        // If the backend returns 200 OK, move them safely to the password page
+
+                                                        setIsOtpVerified(true);
+
+                                                        setMessage("");
+
+                                                    } catch (error: any) {
+
+                                                        console.error("Early OTP Check Error:", error.response);
+
+                                                        // Your custom backend exception message or fallback text
+
+                                                        const serverMessage = error.response?.data?.errorMessage || "Incorrect OTP. Please enter the correct OTP.";
+
+                                                        Swal.fire({
+
+                                                            icon: 'error',
+
+                                                            title: 'Incorrect OTP',
+
+                                                            text: serverMessage.includes("INVALID_USER") ? "Incorrect OTP. Please enter the correct OTP." : serverMessage,
+
+                                                            confirmButtonColor: '#ff7e5f'
+
+                                                        });
+
+                                                        setIsOtpVerified(false); // Halt navigation
+
+                                                    }
+
+                                                }}
 
                                             >
 
@@ -1053,7 +1045,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
                             style={{ color: '#6c757d', fontSize: '12px' }}
 
-                            onClick={() => window.location.reload()}>
+                            onClick={() => navigate('/')}>
 
                             <FaArrowLeft style={{ marginRight: '8px' }} /> Return to Main Entry
 
@@ -1075,6 +1067,3 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
  
 
 export default Login;
-
-
-

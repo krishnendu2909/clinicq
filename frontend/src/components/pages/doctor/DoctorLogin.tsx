@@ -355,10 +355,11 @@ import axios from "axios";
 
 import { FaArrowLeft } from 'react-icons/fa';
 
+import { useNavigate } from 'react-router-dom';
 
- 
+const DoctorLogin: React.FC<{ onLogin: () => void }> = () => {
 
-const DoctorLogin: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
+  const navigate=useNavigate();
 
   const [email, setEmail] = useState("");
 
@@ -546,9 +547,13 @@ const DoctorLogin: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
 
       setConfirmPassword('');
 
-    } catch (error) {
+      setMessage("");
 
-      Swal.fire("Error", "Invalid OTP or request failed.", "error");
+    } catch (error: any) {
+
+      const serverMessage = error.response?.data?.errorMessage || "Failed to update password.";
+
+      Swal.fire("Error", serverMessage, "error");
 
     }
 
@@ -591,7 +596,9 @@ const DoctorLogin: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
 
       setMessage("Login successful");
 
-      onLogin();
+      navigate('/doctor');
+
+      //onLogin();
 
     }
 
@@ -1009,13 +1016,69 @@ const DoctorLogin: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
 
  
 
-                      <button
+                      {/* <button
 
                         className="btn btn-coral w-100 py-3 rounded-pill fw-bold mb-2"
 
                         onClick={() => { setIsOtpVerified(true); setMessage(""); }}
 
                         disabled={otp.some(digit => digit === "")}
+
+                      >
+
+                        VERIFY & PROCEED
+
+                      </button> */}
+
+                      <button
+
+                        className="btn btn-coral w-100 py-3 rounded-pill fw-bold mb-2"
+
+                        type="button"
+
+                        disabled={otp.some(digit => digit === "") || isSendingEmail}
+
+                        onClick={async () => {
+
+                          const finalOtp = otp.join('');
+
+                          try {
+
+                            // Call the brand new endpoint that doesn't consume the token
+
+                            await axios.get(`http://localhost:8080/clinicq/auth/verify-token?token=${finalOtp}`);
+
+                            // If the backend returns 200 OK, move them safely to the password page
+
+                            setIsOtpVerified(true);
+
+                            setMessage("");
+
+                          } catch (error: any) {
+
+                            console.error("Early OTP Check Error:", error.response);
+
+                            // Your custom backend exception message or fallback text
+
+                            const serverMessage = error.response?.data?.errorMessage || "Incorrect OTP. Please enter the correct OTP.";
+
+                            Swal.fire({
+
+                              icon: 'error',
+
+                              title: 'Incorrect OTP',
+
+                              text: serverMessage.includes("INVALID_USER") ? "Incorrect OTP. Please enter the correct OTP." : serverMessage,
+
+                              confirmButtonColor: '#ff7e5f'
+
+                            });
+
+                            setIsOtpVerified(false); // Halt navigation
+
+                          }
+
+                        }}
 
                       >
 
@@ -1102,7 +1165,7 @@ const DoctorLogin: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
 
               style={{ color: '#6c757d', fontSize: '12px' }}
 
-              onClick={() => window.location.reload()}
+              onClick={() => navigate('/')}
 
             >
 

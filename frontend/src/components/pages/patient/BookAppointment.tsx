@@ -1484,8 +1484,7 @@ import axiosInstance from '../../../services/axiosInstance';
 
 import axios from 'axios';
 
-
- 
+import { useNavigate } from 'react-router-dom';
 
 interface BookProps {
 
@@ -1512,8 +1511,7 @@ type Doctor = {
 
 const BookAppointment: React.FC<BookProps> = ({ onNavigate }) => {
 
-
- 
+  const navigate=useNavigate();
 
   const [selectedSpec, setSelectedSpec] = useState("GENERAL");
 
@@ -2326,7 +2324,7 @@ const BookAppointment: React.FC<BookProps> = ({ onNavigate }) => {
 
           <div className="mt-auto pt-4 border-top">
 
-            <button onClick={() => window.location.reload()} className="btn w-100 d-flex align-items-center gap-2 fw-bold logout-btn text-danger border-0 py-2
+            <button onClick={() =>{ localStorage.removeItem("token"); navigate('/');}} className="btn w-100 d-flex align-items-center gap-2 fw-bold logout-btn text-danger border-0 py-2
 
             style={{fontSize:'13px'}}"><span>📤</span> Log Out</button>
 

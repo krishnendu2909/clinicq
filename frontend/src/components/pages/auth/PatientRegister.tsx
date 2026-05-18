@@ -414,92 +414,45 @@
 
 import React, { useEffect, useState } from "react";
 
-
- 
-
 import axios from "axios";
 
-
-
+import { useNavigate } from "react-router-dom";
 
 
  
 
 interface Props {
 
+  // onRegisterSuccess: () => void;
 
- 
-
-  onRegisterSuccess: () => void;
-
-
- 
-
-  onReturnToLogin: () => void;
-
-
- 
+  // onReturnToLogin: () => void;
 
 }
 
 
-
-
-
  
 
-const PatientRegister: React.FC<Props> = ({ onRegisterSuccess, onReturnToLogin }) => {
+const PatientRegister: React.FC<Props> = () => {
 
-
- 
+  const navigate=useNavigate();
 
   const [formData, setFormData] = useState({
 
-
- 
-
     name: "",
-
-
- 
 
     email: "",
 
-
- 
-
     dateOfBirth: "",
-
-
- 
 
     gender: "MALE",
 
-
- 
-
     phone: "",
-
-
- 
 
     password: "",
 
-
- 
-
   });
 
-
-
-
-
- 
-
   const [error, setError] = useState("");
-
-
- 
 
   const [showPassword, setShowPassword] = useState(false);
 
@@ -511,143 +464,59 @@ const PatientRegister: React.FC<Props> = ({ onRegisterSuccess, onReturnToLogin }
 
   const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
 
-
-
-
- 
-
   // --- FUNCTIONALITY (STRICTLY UNTOUCHED) ---
-
-
- 
 
   const handleChange = (e: any) => {
 
-
- 
-
     setFormData({ ...formData, [e.target.name]: e.target.value });
-
-
- 
 
   };
 
-
-
-
-
- 
-
   const handleSubmit = async (e: any) => {
-
-
- 
 
     e.preventDefault();
 
-
- 
-
     try {
-
-
- 
 
       const response = await axios.post(
 
-
- 
-
         "http://localhost:8080/clinicq/auth/signup",
-
-
- 
 
         {
 
-
- 
-
           name: formData.name,
-
-
- 
 
           phone: formData.phone,
 
-
- 
-
           dateOfBirth: formData.dateOfBirth,
-
-
- 
 
           gender: formData.gender,
 
-
- 
-
           user: {
-
-
- 
 
             email: formData.email,
 
-
- 
-
             password: formData.password,
-
-
- 
 
           },
 
-
- 
-
         }
-
-
- 
 
       );
 
-
- 
-
       console.log(response.data);
 
+      //onRegisterSuccess();
 
- 
-
-      onRegisterSuccess();
-
-
- 
+      navigate('/patient-login');
 
     } catch (err: any) {
 
-
- 
-
       console.error(err);
-
-
- 
 
       setError(err.response?.data || "Registration failed");
 
-
- 
-
     }
-
-
- 
 
   };
 
@@ -677,20 +546,13 @@ const PatientRegister: React.FC<Props> = ({ onRegisterSuccess, onReturnToLogin }
 
     const{name,email,dateOfBirth,phone,password}=formData;
 
-
- 
-
     //age validation logic
-
-   
 
     const isOldEnough=isValidAge(dateOfBirth);
 
     const nameRegex=/^[a-zA-Z\s]{2,50}$/;
 
     const isNameOk=nameRegex.test(name);
-
-   
 
     const isEmailOk=emailRegex.test(email);
 
@@ -700,384 +562,149 @@ const PatientRegister: React.FC<Props> = ({ onRegisterSuccess, onReturnToLogin }
 
     setIsValid(isNameOk && isOldEnough && isEmailOk && isPhoneOk && isPassOk);
 
-
- 
-
   },[formData]);
-
-
-
-
- 
 
   return (
 
-
- 
-
     <div className="min-vh-100 d-flex align-items-center justify-content-center p-3"
-
-
- 
 
       style={{
 
-
- 
-
         background: 'radial-gradient(circle at center, #f8f9fa 0%, #e9ecef 100%)',
-
-
- 
 
         fontFamily: "'Segoe UI', Roboto, sans-serif"
 
-
- 
-
       }}>
-
-
-
-
-
- 
 
       <style>
 
-
- 
-
         {`
-
-
- 
 
         @keyframes slideIn {
 
-
- 
-
             from { opacity: 0; transform: translateY(10px); }
-
-
- 
 
             to { opacity: 1; transform: translateY(0); }
 
-
- 
-
         }
-
-
- 
 
         .register-glass-card {
 
-
- 
-
             background: rgba(255, 255, 255, 0.75);
-
-
- 
 
             backdrop-filter: blur(30px);
 
-
- 
-
             -webkit-backdrop-filter: blur(30px);
-
-
- 
 
             border: 1px solid rgba(32, 201, 151, 0.2);
 
-
- 
-
             animation: slideIn 0.5s ease-out;
-
-
- 
 
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05);
 
-
- 
-
         }
-
-
- 
 
         .form-input-reg {
 
-
- 
-
             background: #ffffff !important;
-
-
- 
 
             border: 1px solid #dee2e6 !important;
 
-
- 
-
             color: #212529 !important;
-
-
- 
 
             transition: all 0.3s ease;
 
-
- 
-
             padding: 10px 15px !important;
-
-
- 
 
             font-weight: 500;
 
-
- 
-
         }
-
-
- 
 
         .form-input-reg:focus {
 
-
- 
-
             border-color: #20c997 !important;
-
-
- 
 
             box-shadow: 0 0 0 0.25rem rgba(32, 201, 151, 0.1) !important;
 
-
- 
-
             outline: none;
 
-
- 
-
         }
-
-
- 
 
         .label-reg {
 
-
- 
-
             font-size: 0.7rem;
-
-
- 
 
             letter-spacing: 1px;
 
-
- 
-
             color: #198754;
-
-
- 
 
             margin-left: 4px;
 
-
- 
-
             font-weight: 700;
 
-
- 
-
         }
-
-
- 
 
         .btn-emerald {
 
-
- 
-
             background: linear-gradient(90deg, #20c997 0%, #00b894 100%);
-
-
- 
 
             color: white; border: none; transition: transform 0.2s;
 
-
- 
-
         }
-
-
- 
 
         .btn-emerald:hover { transform: translateY(-2px); color: white; }
 
-
- 
-
         `}
-
-
- 
 
       </style>
 
-
-
-
-
- 
-
       <div className="card register-glass-card rounded-5 border-0" style={{ maxWidth: '500px', width: '100%' }}>
-
-
- 
 
         <div className="card-body p-4 p-md-5">
 
-
-
-
- 
-
           {/* Top Branding Section */}
-
-
- 
 
           <div className="text-center mb-4">
 
-
- 
-
             <div className="mx-auto mb-3 d-flex align-items-center justify-content-center shadow-sm"
-
-
- 
 
               style={{
 
-
- 
-
                 width: '54px', height: '54px', borderRadius: '16px',
-
-
- 
 
                 background: 'linear-gradient(135deg, #20c997, #00b894)', color: '#fff'
 
-
- 
-
               }}>
-
-
- 
 
               <span style={{ fontSize: '1.6rem' }}>🏥</span>
 
-
- 
-
             </div>
-
-
- 
 
             <h2 className="fw-bold mb-1" style={{ color: '#111', letterSpacing: '-0.5px' }}>JOIN CLINICQ</h2>
 
-
- 
-
             <p className="small text-muted fw-bold opacity-75">Create your patient profile in seconds</p>
-
-
- 
 
           </div>
 
-
-
-
-
- 
-
           {error && (
-
-
- 
 
             <div className="alert alert-danger text-center py-2 small border-0 bg-danger-subtle text-danger fw-bold rounded-3">
 
-
- 
-
               {error}
-
-
- 
 
             </div>
 
-
- 
-
           )}
-
-
-
-
-
- 
 
           <form onSubmit={handleSubmit}>
 
-
- 
-
             <div className="row g-3">
-
-
- 
 
               <div className="col-12">
 
-
- 
-
                 <label className="label-reg text-uppercase">Full Name</label>
 
-
- 
-
                 <input type="text" name="name" value={formData.name} onChange={handleChange} className={`form-control form-input-reg rounded-3 shadow-none ${formData.name && !/^[a-zA-Z\s]{2,50}$/.test(formData.name)?'border-danger':''}`} placeholder="John Doe" required />
-
-
- 
 
                 {formData.name && !/^[a-zA-Z\s]{2,50}$/.test(formData.name) && (
 
@@ -1089,26 +716,11 @@ const PatientRegister: React.FC<Props> = ({ onRegisterSuccess, onReturnToLogin }
 
                 )}
 
-
- 
-
               </div>
-
-
-
-
-
- 
 
               <div className="col-12">
 
-
- 
-
                 <label className="label-reg text-uppercase">Email Address</label>
-
-
- 
 
                 <input type="email" name="email" value={formData.email} onChange={handleChange} className="form-control form-input-reg rounded-3 shadow-none" placeholder="john@example.com" required />
 
@@ -1118,26 +730,11 @@ const PatientRegister: React.FC<Props> = ({ onRegisterSuccess, onReturnToLogin }
 
                 )}
 
-
- 
-
               </div>
-
-
-
-
-
- 
 
               <div className="col-6">
 
-
- 
-
                 <label className="label-reg text-uppercase">D.O.B</label>
-
-
- 
 
                 <input type="date" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleChange}
 
@@ -1157,69 +754,27 @@ const PatientRegister: React.FC<Props> = ({ onRegisterSuccess, onReturnToLogin }
 
                   )}
 
-
- 
-
               </div>
-
-
-
-
-
- 
 
               <div className="col-6">
 
-
- 
-
                 <label className="label-reg text-uppercase">Gender</label>
-
-
- 
 
                 <select name="gender" value={formData.gender} onChange={handleChange} className="form-select form-input-reg rounded-3 shadow-none">
 
-
- 
-
                   <option value="MALE">Male</option>
-
-
- 
 
                   <option value="FEMALE">Female</option>
 
-
- 
-
                   <option value="OTHER">Other</option>
-
-
- 
 
                 </select>
 
-
- 
-
               </div>
-
-
-
-
-
- 
 
               <div className="col-12">
 
-
- 
-
                 <label className="label-reg text-uppercase">Contact No</label>
-
-
- 
 
                 <input type="tel" name="phone" value={formData.phone} onChange={handleChange} maxLength={10} className="form-control form-input-reg rounded-3 shadow-none" placeholder="+91..." required />
 
@@ -1229,123 +784,47 @@ const PatientRegister: React.FC<Props> = ({ onRegisterSuccess, onReturnToLogin }
 
                 )}
 
-
- 
-
               </div>
-
-
-
-
-
- 
 
               <div className="col-12 mb-2">
 
-
- 
-
                 <label className="label-reg text-uppercase">Secure Password</label>
-
-
- 
 
                 <div className="input-group">
 
-
- 
-
                   <input
-
-
- 
 
                     type={showPassword ? "text" : "password"}
 
-
- 
-
                     name="password"
-
-
- 
 
                     value={formData.password}
 
-
- 
-
                     onChange={handleChange}
-
-
- 
 
                     className="form-control form-input-reg rounded-start-3 shadow-none border-end-0"
 
-
- 
-
                     placeholder="••••••••"
-
-
- 
 
                     required
 
-
- 
-
                   />
-
-                 
-
-
- 
 
                   <button
 
-
- 
-
                     type="button"
-
-
- 
 
                     className="btn bg-white border border-start-0"
 
-
- 
-
                     style={{ borderColor: '#dee2e6', borderRadius: '0 8px 8px 0' }}
-
-
- 
 
                     onClick={() => setShowPassword(!showPassword)}
 
-
- 
-
                   >
-
-
- 
 
                     <small className="fw-bold text-success" style={{ fontSize: '10px' }}>{showPassword ? "HIDE" : "SHOW"}</small>
 
-
- 
-
                   </button>
-
-
- 
-
-                 
-
-
- 
 
                 </div>
 
@@ -1359,21 +838,9 @@ const PatientRegister: React.FC<Props> = ({ onRegisterSuccess, onReturnToLogin }
 
                   )}
 
-
- 
-
               </div>
 
-
- 
-
             </div>
-
-
-
-
-
- 
 
             <button type="submit"
 
@@ -1391,88 +858,34 @@ const PatientRegister: React.FC<Props> = ({ onRegisterSuccess, onReturnToLogin }
 
             }}>
 
-
- 
-
               REGISTER ACCOUNT
-
-
- 
 
             </button>
 
-
-
-
-
- 
-
             <div className="text-center mt-4">
-
-
- 
 
               <button type="button" className="btn btn-link text-decoration-none small fw-bold p-0"
 
-
- 
-
                 style={{ color: '#6c757d', fontSize: '13px' }}
 
-
- 
-
-                onClick={onReturnToLogin}>
-
-
- 
+                onClick={()=> navigate('/patient-login')}>
 
                 Already have an account? <span style={{ color: '#20c997' }}>Login</span>
 
-
- 
-
               </button>
-
-
- 
 
             </div>
 
-
- 
-
           </form>
-
-
- 
 
         </div>
 
-
- 
-
       </div>
-
-
- 
 
     </div>
 
-
- 
-
   );
 
-
- 
-
 };
-
-
-
-
-
- 
 
 export default PatientRegister;

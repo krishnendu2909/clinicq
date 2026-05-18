@@ -1,13 +1,41 @@
+import React, { useState, useEffect } from 'react';
 
-import React from 'react';
+import { FaCheckCircle, FaHourglassHalf } from 'react-icons/fa';
 
-import { FaCheckCircle, FaArrowLeft, FaTicketAlt } from 'react-icons/fa';
+import axiosInstance from '../../../services/axiosInstance';
 
-import PatientNavbar from '../../layout/PatientNavbar';
+import { useNavigate } from 'react-router-dom';
 
 interface TokenProps {
 
-   onNavigate: (tab: 'book' | 'my' | 'history' | 'token') => void;
+  onNavigate: (tab: 'book' | 'my' | 'history' | 'token') => void;
+
+}
+
+
+ 
+
+// mapping the keys exactly to matching response attributes
+
+interface TokenData {
+
+   patientId: string;
+
+   name: string;
+
+   tokenDisplay: string;
+
+   position: number;
+
+   status: 'BOOKED' | 'WAITING' | 'IN_CONSULTATION' | 'COMPLETED';
+
+   doctorName: string;
+
+   department: string;
+
+   estimatedWaitTime: number;
+
+   timestamp: string;
 
 }
 
@@ -16,15 +44,75 @@ interface TokenProps {
 
 const PatientToken: React.FC<TokenProps> = ({ onNavigate }) => {
 
-   // Hardcoded for UI display
+    const navigate=useNavigate();
 
-   const currentStatus = 'WAITING'; 
+   const [tokenData, setTokenData] = useState<TokenData | null>(null);
 
-   const tokenNumber = "CD2-005";
+   const [loading, setLoading] = useState<boolean>(true);
 
-   const doctorName = "Dr. Mian";
+   const [error, setError] = useState<string | null>(null);
 
-   const department = "General Cardiology";
+
+ 
+
+   // Replace with dynamic phone number context data if applicable
+
+
+ 
+
+   useEffect(() => {
+
+    const token=localStorage.getItem("token");
+
+    if(!token){
+
+        setError("Please log in to view your queue status.");
+
+        setLoading(false);
+
+        return;
+
+    }
+
+       const fetchTokenStatus = async () => {
+
+           try {
+
+            if(loading) setLoading(true);
+
+           
+
+              // setLoading(true);
+
+               const response = await axiosInstance.get(`/clinicq/patient/queue-position`);
+
+               setTokenData(response.data);
+
+               setError(null);
+
+           } catch (err: any) {
+
+               console.error("Queue positioning data fetch error:", err);
+
+               setError("No active consultation token tracking information found.");
+
+           } finally {
+
+               setLoading(false);
+
+           }
+
+       };
+
+       fetchTokenStatus();
+
+       // Polling interval: Auto updates queue position numbers every 15 seconds
+
+       const pollInterval = setInterval(fetchTokenStatus, 15000);
+
+       return () => clearInterval(pollInterval);
+
+   }, []);
 
 
  
@@ -43,6 +131,10 @@ const PatientToken: React.FC<TokenProps> = ({ onNavigate }) => {
 
 
  
+
+   // Read live baseline status or default to dynamic waiting view structures
+
+   const currentStatus = tokenData?.status || 'WAITING';
 
    const getStatusIndex = (status: string) => steps.findIndex(s => s.status === status);
 
@@ -78,7 +170,7 @@ const PatientToken: React.FC<TokenProps> = ({ onNavigate }) => {
 
  
 
-           {/* SIDEBAR (Now matches BookAppointment) */}
+           {/* SIDEBAR */}
 
            <div className="bg-white border-end p-3 d-flex flex-column shadow-sm" style={{ width: '240px' }}>
 
@@ -109,7 +201,7 @@ const PatientToken: React.FC<TokenProps> = ({ onNavigate }) => {
 
                    <div className="mt-auto pt-4 border-top">
 
-                       <button onClick={() => window.location.reload()} className="btn w-100 d-flex align-items-center gap-2 fw-bold logout-btn text-danger border-0 py-2" style={{fontSize:'13px'}}><span>📤</span> Log Out</button>
+                       <button onClick={() => {localStorage.removeItem("token"); navigate('/');}} className="btn w-100 d-flex align-items-center gap-2 fw-bold logout-btn text-danger border-0 py-2 style={{fontSize:'13px'}}" ><span>📤</span> Log Out</button>
 
                    </div>
 
@@ -124,130 +216,180 @@ const PatientToken: React.FC<TokenProps> = ({ onNavigate }) => {
 
            <div className="flex-grow-1 p-4 overflow-auto">
 
-               <h3 className="fw-bold mb-4">Queue Status</h3>
-
-               
+               <h3 className="fw-bold mb-4">Queue Status</h3>          
 
                <div className="row justify-content-center mt-2">
 
                    <div className="col-lg-8">
 
-                       
+                       {loading ? (
 
-                       {/* THE TICKET */}
+                           <div className="text-center py-5">
 
-                       <div className="glass-card-token shadow-lg overflow-hidden position-relative mb-4">
+                               <div className="spinner-border text-warning" role="status"></div>
 
-                           <div style={{ height: '8px', background: 'linear-gradient(90deg, #ff7e5f, #ff6b6b)' }}></div>
+                               <p className="mt-2 fw-bold text-muted">Retrieving live queue position data...</p>
 
-                           <div className="p-5 text-center">
+                           </div>
 
-                               <span className="badge rounded-pill px-3 py-2 mb-3" style={{ background: 'rgba(255, 126, 95, 0.1)', color: '#ff7e5f', fontWeight: '700', fontSize: '10px' }}>
+                       ) : error ? (
 
-                                   ACTIVE CONSULTATION TOKEN
+                           <div className="glass-card-token p-5 text-center">
 
-                               </span>
+                               <span className="fs-1">🎟️</span>
 
-                               <h1 className="display-3 fw-bold mb-0" style={{ color: '#111', letterSpacing: '-1px' }}>{tokenNumber}</h1>
+                               <h5 className="fw-bold mt-3 text-muted">{error}</h5>
 
-                               <p className="text-muted small mt-2">Present this at the doctor's cabin when called</p>
+                               <p className="small text-muted">Book an intake check-in or visit registration desk to retrieve a token status journey.</p>
 
-                               
+                           </div>
 
-                               <div className="d-flex justify-content-center gap-4 border-top mt-4 pt-4">
+                       ) : (
 
-                                   <div className="text-start">
+                           <>
 
-                                       <small className="text-muted fw-bold d-block text-uppercase" style={{ fontSize: '9px' }}>Doctor</small>
+                               {/* THE TICKET */}
 
-                                       <span className="fw-bold">{doctorName}</span>
+                               <div className="glass-card-token  shadow-lg overflow-hidden position-relative mb-4">
 
-                                   </div>
+                                   <div style={{ height: '8px', background: 'linear-gradient(90deg, #ff7e5f, #ff6b6b)' }}></div>
 
-                                   <div className="vr"></div>
+                                   <div className="p-5 text-center">
 
-                                   <div className="text-start">
+                                       <span className="badge rounded-pill px-3 py-2 mb-3" style={{ background: 'rgba(255, 126, 95, 0.1)', color: '#ff7e5f', fontWeight: '700', fontSize: '15px' }}>
 
-                                       <small className="text-muted fw-bold d-block text-uppercase" style={{ fontSize: '9px' }}>Department</small>
+                                           PATIENT NAME : {tokenData?.name.toUpperCase()}
 
-                                       <span className="fw-bold">{department}</span>
+                                       </span>
+
+                                       <h1 className="display-3 fw-bold mb-0" style={{ color: '#111', letterSpacing: '-1px' }}>
+
+                                           {tokenData?.tokenDisplay}
+
+                                       </h1>
+
+                                       
+
+                                       {/* QUEUE POSITION STATS */}
+
+                                       <div className="d-flex justify-content-center align-items-center gap-3 mt-3">
+
+                                           <div className="badge bg-dark px-3 py-2 rounded-pill small" style={{fontSize: '15px' }}>
+
+                                               Position No : {tokenData?.position}
+
+                                           </div>
+
+                                           <div className="badge bg-warning-subtle text-warning-emphasis px-3 py-2 rounded-pill small d-flex align-items-center gap-1">
+
+                                               <FaHourglassHalf style={{fontSize: '19px'}} /> Est. Wait Time: {tokenData?.estimatedWaitTime} mins
+
+                                           </div>
+
+                                       </div>
+
+
+ 
+
+                                       <p className="text-muted small mt-3"></p>
+
+                                       
+
+                                       <div className="d-flex justify-content-center gap-4 border-top mt-4 pt-4">
+
+                                           <div className="text-start">
+
+                                               <small className="text-muted fw-bold d-block text-uppercase" style={{ fontSize: '9px' }}>Doctor</small>
+
+                                               <span className="fw-bold">{tokenData?.doctorName}</span>
+
+                                           </div>
+
+                                           <div className="vr"></div>
+
+                                           <div className="text-start">
+
+                                               <small className="text-muted fw-bold d-block text-uppercase" style={{ fontSize: '9px' }}>Department</small>
+
+                                               <span className="fw-bold">{tokenData?.department}</span>
+
+                                           </div>
+
+                                       </div>
 
                                    </div>
 
                                </div>
 
-                           </div>
-
-                       </div>
-
 
  
 
-                       {/* THE TIMELINE */}
+                               {/* THE TIMELINE */}
 
-                       <div className="glass-card-token p-5 shadow-sm">
+                               <div className="glass-card-token p-5 shadow-sm">
 
-                           <h6 className="fw-bold text-muted small text-uppercase mb-5">Visit Journey</h6>
-
-                           
-
-                           <div className="position-relative d-flex justify-content-between align-items-center px-2">
-
-                               <div className="step-line w-100"></div>
-
-                               <div className="step-line" style={{ width: `${(currentIndex / (steps.length - 1)) * 100}%`, background: '#ff7e5f' }}></div>
-
-
- 
-
-                               {steps.map((step, index) => {
-
-                                   const isCompleted = index < currentIndex;
-
-                                   const isActive = index === currentIndex;
+                                   <h6 className="fw-bold text-muted small text-uppercase mb-4">Visit Journey</h6>
 
                                    
 
-                                   return (
+                                   <div className="position-relative d-flex justify-content-between align-items-center px-2">
 
-                                       <div key={step.status} className="d-flex flex-column align-items-center position-relative" style={{ zIndex: 2 }}>
+                                       <div className="step-line w-100"></div>
 
-                                           <div className={`step-dot ${isActive ? 'active-pulse' : ''}`} 
-
-                                                style={{ 
-
-                                                    background: isCompleted ? '#ff7e5f' : '#fff', 
-
-                                                    color: isCompleted ? '#fff' : '#6c757d',
-
-                                                    border: isCompleted || isActive ? 'none' : '2px solid #dee2e6' 
-
-                                                }}>
-
-                                               {isCompleted ? <FaCheckCircle /> : step.icon}
-
-                                           </div>
-
-                                           <span className={`mt-3 small fw-bold ${isActive ? 'text-dark' : 'text-muted'}`} 
-
-                                                 style={{ position: 'absolute', top: '40px', whiteSpace: 'nowrap', fontSize: '10px' }}>
-
-                                               {step.label}
-
-                                           </span>
-
-                                       </div>
-
-                                   );
-
-                               })}
-
-                           </div>
-
-                       </div>
+                                       <div className="step-line" style={{ width: currentIndex >= 0 ? `${(currentIndex / (steps.length - 1)) * 100}%` : '0%', background: '#ff7e5f' }}></div>
 
 
  
+
+                                       {steps.map((step, index) => {
+
+                                           const isCompleted = index < currentIndex;
+
+                                           const isActive = index === currentIndex;
+
+                                           
+
+                                           return (
+
+                                               <div key={step.status} className="d-flex flex-column align-items-center position-relative" style={{ zIndex: 2 }}>
+
+                                                   <div className={`step-dot ${isActive ? 'active-pulse' : ''}`} 
+
+                                                        style={{ 
+
+                                                            background: isCompleted ? '#ff7e5f' : '#fff', 
+
+                                                            color: isCompleted ? '#fff' : '#6c757d',
+
+                                                            border: isCompleted || isActive ? 'none' : '2px solid #dee2e6' 
+
+                                                        }}>
+
+                                                       {isCompleted ? <FaCheckCircle /> : step.icon}
+
+                                                   </div>
+
+                                                   <span className={`mt-3 small fw-bold ${isActive ? 'text-dark' : 'text-muted'}`} 
+
+                                                         style={{ position: 'absolute', top: '40px', whiteSpace: 'nowrap', fontSize: '10px' }}>
+
+                                                       {step.label}
+
+                                                   </span>
+
+                                               </div>
+
+                                           );
+
+                                       })}
+
+                                   </div>
+
+                               </div>
+
+                           </>
+
+                       )}
 
                    </div>
 

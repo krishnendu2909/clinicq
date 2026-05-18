@@ -1,5 +1,3 @@
-
-
 // import React, { useState, useEffect } from 'react';
 
 // import axios from 'axios';
@@ -473,8 +471,7 @@ import Swal from 'sweetalert2';
 
 import axiosInstance from '../../../services/axiosInstance';
 
-
- 
+import { useNavigate } from 'react-router-dom';
 
 interface HistoryProps {
 
@@ -486,6 +483,8 @@ interface HistoryProps {
  
 
 const PastHistory: React.FC<HistoryProps> = ({ onNavigate }) => {
+
+  const navigate=useNavigate();
 
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -856,9 +855,9 @@ const PastHistory: React.FC<HistoryProps> = ({ onNavigate }) => {
 
           <div className="mt-auto pt-4 border-top">
 
-            <button onClick={() => window.location.reload()} className="btn w-100 d-flex align-items-center gap-2 fw-bold logout-btn text-danger border-0 py-2"
+            <button onClick={() => {localStorage.removeItem("token"); navigate('/');}} className="btn w-100 d-flex align-items-center gap-2 fw-bold logout-btn text-danger border-0 py-2 style={{ fontSize: '13px' }}"
 
-              style={{ fontSize: '13px' }}><span>📤</span> Log Out</button>
+              ><span>📤</span> Log Out</button>
 
           </div>
 
@@ -1013,7 +1012,7 @@ const PastHistory: React.FC<HistoryProps> = ({ onNavigate }) => {
 
                         <span className="badge rounded-pill bg-success-subtle text-success px-3 mb-2">{selectedVisit.status || 'Completed'}</span>
 
-                        <p className="fw-bold mb-1" style={{ fontSize: '1rem' }}>{visitDetail?.diagnosis || "General Consultation"}</p>
+                        <p className="fw-bold mb-1" style={{ fontSize: '1rem' }}>{visitDetail?.diagnosis || "Consultation"}</p>
 
                       </div>
 
@@ -1030,9 +1029,9 @@ const PastHistory: React.FC<HistoryProps> = ({ onNavigate }) => {
 
                       <div className="row g-2">
 
-                        <div className="col-6"><div className="p-2 rounded-3 text-center border" style={{ background: '#fff' }}><small className="d-block text-muted">Blood Pressure</small><b style={{ color: '#20c997' }}>{visitDetail?.bloodPressure || "120/80"}</b></div></div>
+                        <div className="col-6"><div className="p-2 rounded-3 text-center border" style={{ background: '#fff' }}><small className="d-block text-muted">Blood Pressure</small><b style={{ color: '#20c997' }}>{visitDetail?.bloodPressure || "N/A"}</b></div></div>
 
-                        <div className="col-6"><div className="p-2 rounded-3 text-center border" style={{ background: '#fff' }}><small className="d-block text-muted">Heart Rate</small><b style={{ color: '#20c997' }}>{visitDetail?.heartRate || "72"} BPM</b></div></div>
+                        <div className="col-6"><div className="p-2 rounded-3 text-center border" style={{ background: '#fff' }}><small className="d-block text-muted">Heart Rate</small><b style={{ color: '#20c997' }}>{visitDetail?.heartRate || "N/A"} BPM</b></div></div>
 
                       </div>
 
@@ -1140,5 +1139,3 @@ const PastHistory: React.FC<HistoryProps> = ({ onNavigate }) => {
  
 
 export default PastHistory;
-
-

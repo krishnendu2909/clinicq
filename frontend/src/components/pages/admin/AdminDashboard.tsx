@@ -8,12 +8,23 @@ import Sidebar from '../../layout/Sidebar';
 
 import axiosInstance from '../../../services/axiosInstance';
 
+import { useNavigate } from 'react-router-dom';
+
+import { FaChevronLeft,FaChevronRight } from 'react-icons/fa';
+
+
+ 
+
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+
+import { BiFontSize } from 'react-icons/bi';
+
 
  
 
 interface AdminDashboardProps {
 
-    onToggleForm?: (isOpen: boolean) => void;
+    // onToggleForm?: (isOpen: boolean) => void;
 
 }
 
@@ -38,7 +49,7 @@ interface Doctor {
 
 }
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ onToggleForm }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = () => {
 
     const [activeTab, setActiveTab] = useState<'scheduling' | 'rules' | 'analytics'>('scheduling');
 
@@ -67,6 +78,294 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onToggleForm }) => {
     const phoneRegex = /^[0-9]{10}$/;
 
     const passRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
+
+
+ 
+
+    // --- NEW ANALYTICS & FILTER STATES ---
+
+   const todayStr = new Date().toISOString().split('T')[0];
+
+   const [analyticsStartDate, setAnalyticsStartDate] = useState(todayStr);
+
+   const [analyticsEndDate, setAnalyticsEndDate] = useState(todayStr);
+
+   const [analyticsDept, setAnalyticsDept] = useState("");
+
+   const [filteredDoctors, setFilteredDoctors] = useState<Doctor[]>([]);
+
+   const [selectedDocId, setSelectedDocId] = useState<string>("");
+
+
+ 
+
+   // --- NEW CHART DATA STATES ---
+
+   const [chartData, setChartData] = useState<any[]>([]);
+
+   const [isChartLoading, setIsChartLoading] = useState<boolean>(false);
+
+
+ 
+
+   // Completely unified API fetching engine for stats AND chart trends
+
+   const fetchAnalyticsAndChartData = useCallback(async () => {
+
+       if (!selectedDocId) return;
+
+       setIsChartLoading(true);
+
+       try {
+
+           // 1. Fetch Carousel Metrics Card Summary
+
+           const statsRes = await axiosInstance.get('/clinicq/admin/stats/summary', {
+
+               params: { startDate: analyticsStartDate, endDate: analyticsEndDate, doctorId: selectedDocId }
+
+           });
+
+           setStats({
+
+               totalAppointments: statsRes.data.totalAppointments,
+
+               totalWalkIns: statsRes.data.totalWalkIns,
+
+               totalCompleted: statsRes.data.totalCompleted,
+
+               totalNoShows: statsRes.data.totalNoShows
+
+           });
+
+
+ 
+
+           // 2. Fetch Timeline Chart Trend Mapping Arrays
+
+           const chartRes = await axiosInstance.get('/clinicq/admin/stats/chart', {
+
+               params: { startDate: analyticsStartDate, endDate: analyticsEndDate, doctorId: selectedDocId }
+
+           });
+
+           
+
+           // Format dates slightly for better X-Axis reading (e.g., "May 14")
+
+           const formattedChartData = chartRes.data.map((item: any) => {
+
+               const dateObj = new Date(item.date);
+
+               return {
+
+                   ...item,
+
+                   displayDate: dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })
+
+               };
+
+           });
+
+           setChartData(formattedChartData);
+
+           
+
+           setCurrentCardIndex(0);
+
+           setIsFlipped({});
+
+       } catch (err) {
+
+           console.error("Error updating admin analytics visualizers:", err);
+
+       } finally {
+
+           setIsChartLoading(false);
+
+       }
+
+   }, [analyticsStartDate, analyticsEndDate, selectedDocId]);
+
+
+ 
+
+   // Update your listener useEffect to trigger this new unified method:
+
+   useEffect(() => {
+
+       fetchAnalyticsAndChartData();
+
+   }, [fetchAnalyticsAndChartData]);
+
+
+
+ 
+
+   
+
+   // Core API Stats State
+
+   const [stats, setStats] = useState({
+
+       totalAppointments: 0,
+
+       totalWalkIns: 0,
+
+       totalCompleted: 0,
+
+       totalNoShows: 0
+
+   });
+
+
+    // Carousel Navigation States
+
+   const [currentCardIndex, setCurrentCardIndex] = useState(0);
+
+   const [isFlipped, setIsFlipped] = useState<{ [key: number]: boolean }>({});
+
+
+
+ 
+
+   // Filter doctors when department selection changes
+
+   useEffect(() => {
+
+       if (!analyticsDept) {
+
+           setFilteredDoctors([]);
+
+           setSelectedDocId("");
+
+           return;
+
+       }
+
+       // Match specialized target categories cleanly (case-insensitive checks)
+
+       const matched = doctors.filter(doc => 
+
+           doc.specialization.toUpperCase() === analyticsDept.toUpperCase()
+
+       );
+
+       setFilteredDoctors(matched);
+
+       setSelectedDocId(""); // Reset doctor selection
+
+   }, [analyticsDept, doctors]);
+
+
+ 
+
+   // Fetch Analytics data from backend endpoint
+
+   const fetchAnalyticsData = useCallback(async () => {
+
+       if (!selectedDocId) return;
+
+       try {
+
+           const response = await axiosInstance.get('/clinicq/admin/stats/summary', {
+
+               params: {
+
+                   startDate: analyticsStartDate,
+
+                   endDate: analyticsEndDate,
+
+                   doctorId: selectedDocId
+
+               }
+
+           });
+
+           setStats({
+
+               totalAppointments: response.data.totalAppointments,
+
+               totalWalkIns: response.data.totalWalkIns,
+
+               totalCompleted: response.data.totalCompleted,
+
+               totalNoShows: response.data.totalNoShows
+
+           });
+
+           // Reset slider view to first element on new loads
+
+           setCurrentCardIndex(0);
+
+           setIsFlipped({});
+
+       } catch (err) {
+
+           console.error("Error fetching analytics statistics:", err);
+
+       }
+
+   }, [analyticsStartDate, analyticsEndDate, selectedDocId]);
+
+
+ 
+
+   // Automatically trigger data refetch when core filters change
+
+   useEffect(() => {
+
+       fetchAnalyticsData();
+
+   }, [fetchAnalyticsData]);
+
+
+ 
+
+   // Carousel Slider Mechanics Controls
+
+   const statsCards = [
+
+       { label: 'Total Booked', val: stats.totalAppointments, col: '#007bff', icon: '📅', desc: 'Total scheduled sessions' },
+
+       { label: 'Walk-ins', val: stats.totalWalkIns, col: '#20c997', icon: '🚶‍♂️', desc: 'Direct on-site arrivals' },
+
+       { label: 'Completed', val: stats.totalCompleted, col: '#ff7e5f', icon: '✅', desc: 'Successful checkouts' },
+
+       { label: 'No-Shows', val: stats.totalNoShows, col: '#ff6b6b', icon: '❌', desc: 'Missed appointment slots' }
+
+   ];
+
+
+ 
+
+   const handleNextCard = () => {
+
+       setCurrentCardIndex((prev) => (prev === statsCards.length - 1 ? 0 : prev + 1));
+
+   };
+
+
+ 
+
+   const handlePrevCard = () => {
+
+       setCurrentCardIndex((prev) => (prev === 0 ? statsCards.length - 1 : prev - 1));
+
+   };
+
+
+ 
+
+   const toggleCardFlip = (idx: number, flipState: boolean) => {
+
+       setIsFlipped(prev => ({ ...prev, [idx]: flipState }));
+
+   };
+
+
+
+ 
 
     const [formInputs, setFormInputs] = useState({
 
@@ -204,7 +503,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onToggleForm }) => {
 
             setShowForm(false);
 
-            if (onToggleForm) onToggleForm(false);
+            // if (onToggleForm) onToggleForm(false);
 
             setEditingDoctor(null);
 
@@ -338,7 +637,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onToggleForm }) => {
 
         setShowForm(true);
 
-        if (onToggleForm) onToggleForm(true);
+        // if (onToggleForm) onToggleForm(true);
 
     };
 
@@ -352,7 +651,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onToggleForm }) => {
 
         setSelectedDays([]);
 
-        if (onToggleForm) onToggleForm(false);
+        // if (onToggleForm) onToggleForm(false);
 
     };
 
@@ -451,6 +750,437 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onToggleForm }) => {
                     .btn-vivid:hover { transform: translateY(-2px); color: white; box-shadow: 0 5px 15px rgba(255, 126, 95, 0.3); }
 
                     .form-control-custom { background: #fff !important; border: 1px solid #dee2e6 !important; border-radius: 10px; padding: 10px 15px; }
+
+                    /* --- CAROUSEL SLIDER & PERFECTED 3D FLIP ANIMATIONS --- */
+
+                   .analytics-carousel-wrapper {
+
+                       position: relative;
+
+                       width: 100%;
+
+                       max-width: 450px;
+
+                       margin: 0 auto;
+
+                       perspective: 1200px; /* Establishes deep 3D space perspective */
+
+                   }
+
+                   .analytics-card-inner {
+
+                       position: relative;
+
+                       width: 100%;
+
+                       height: 250px;
+
+                       text-align: center;
+
+                       transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+
+                       transform-style: preserve-3d !important; /* Preserves 3D layers during rotation */
+
+                   }
+
+                   .analytics-card-is-flipped {
+
+                       transform: rotateY(180deg) !important;
+
+                   }
+
+                   .analytics-card-front, .analytics-card-back {
+
+                       position: absolute;
+
+                       width: 100%;
+
+                       height: 100%;
+
+                       /* Prevents the rear side of a face from showing when turned away */
+
+                       -webkit-backface-visibility: hidden !important;
+
+                       backface-visibility: hidden !important;
+
+                       border-radius: 24px;
+
+                       display: flex;
+
+                       flex-direction: column;
+
+                       justify-content: center;
+
+                       align-items: center;
+
+                       padding: 20px;
+
+                   }
+
+                   .analytics-card-front {
+
+                       background: #ffffff !important;
+
+                       border: 1px solid rgba(0, 0, 0, 0.05);
+
+                       z-index: 2;
+
+                       transform: rotateY(0deg) !important; /* Base orientation */
+
+                   }
+
+                   .analytics-card-back {
+
+                       /* rotating 180deg on load prevents the text from mirroring when flipped */
+
+                       transform: rotateY(180deg) !important; 
+
+                       z-index: 1;
+
+                   }
+
+                   .carousel-arrow {
+
+                       background: #ffffff;
+
+                       border: 1px solid #dee2e6;
+
+                       width: 45px;
+
+                       height: 45px;
+
+                       border-radius: 50%;
+
+                       display: flex;
+
+                       align-items: center;
+
+                       justify-content: center;
+
+                       cursor: pointer;
+
+                       transition: all 0.2s ease;
+
+                       box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+
+                   }
+
+                   .carousel-arrow:hover {
+
+                       background: #f8f9fa;
+
+                       transform: scale(1.05);
+
+                   }
+
+                   .dot-indicator {
+
+                       width: 10px;
+
+                       height: 10px;
+
+                       border-radius: 50%;
+
+                       background: #dee2e6;
+
+                       transition: all 0.3s ease;
+
+                       border: none;
+
+                       padding: 0;
+
+                   }
+
+                   .dot-active {
+
+                       background: #ec89dd !important;
+
+                       width: 24px;
+
+                       border-radius: 10px;
+
+                   }
+
+                       /* --- FILTER PANEL ENHANCEMENTS --- */
+
+                   .gradient-filter-panel {
+
+                       background: rgba(255, 255, 255, 0.85) !important;
+
+                       backdrop-filter: blur(20px);
+
+                       -webkit-backdrop-filter: blur(20px);
+
+                       border: 2px solid transparent !important;
+
+                       /* Sleek gradient border effect */
+
+                       background-image: linear-gradient(white, white), linear-gradient(135deg, #6a11cb 0%, #ff7e5f 50%, #0beacb 100%) !important;
+
+                       background-origin: border-box !important;
+
+                       background-clip: padding-box, border-box !important;
+
+                       border-radius: 30px !important;
+
+                       box-shadow: 0 15px 35px rgba(0,0,0,0.05) !important;
+
+                   }
+
+                   .input-icon-wrapper {
+
+                       width: 42px;
+
+                       height: 42px;
+
+                       border-radius: 12px;
+
+                       display: flex;
+
+                       align-items: center;
+
+                       justify-content: center;
+
+                       font-size: 1.1rem;
+
+                       color: white;
+
+                       box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+
+                   }
+
+                   .filter-label-custom {
+
+                       font-size: 0.75rem;
+
+                       font-weight: 700;
+
+                       letter-spacing: 0.5px;
+
+                       color: #495057;
+
+                       margin-left: 2px;
+
+                   }
+
+                    /* --- ULTRALIGHT GLASSMORPHIC INPUT PANELS --- */
+
+                   .analytics-filter-card {
+
+                       /* A smooth, warm premium gradient blending soft sunset coral into a gentle peach peach cream */
+
+                       background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fef7ff 100%) !important;
+
+                       
+
+                       border-image: linear-gradient(135deg,#ff7e5f 0%,#ff6b6b 50%,#fecfef 100%) 1 !important;
+
+                       border-radius: 28px;
+
+                       padding: 15px;
+
+                       /* Softer shadow casting for a clean floating look */
+
+                       box-shadow: 0 15px 35px rgba(255, 154, 158, 0.15);
+
+                       transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+
+                   }
+
+                   .analytics-filter-card:hover {
+
+                       transform: translateY(-2px);
+
+                       box-shadow: 0 20px 45px rgba(255, 154, 158, 0.25);
+
+                       border-color: linear-gradient(135deg,#ff6b6b 0%,#ff4757 100%) 1 !important;
+
+                   }
+
+                   .icon-wrapper-accent {
+
+                       /* Kept white to pop cleanly against the warm background wrap */
+
+                       background: #ffffff !important;
+
+                       width: 44px;
+
+                       height: 44px;
+
+                       border-radius: 14px;
+
+                       display: flex;
+
+                       align-items: center;
+
+                       justify-content: center;
+
+                       font-size: 1.25rem;
+
+                       box-shadow: 0 6px 15px rgba(0,0,0,0.05);
+
+                       transition: transform 0.3s ease;
+
+                   }
+
+                   .filter-group-container:hover .icon-wrapper-accent {
+
+                       transform: scale(1.08) rotate(3deg);
+
+                   }
+
+                   .input-label-premium {
+
+                       font-size: 1.2rem !important;
+
+                       font-weight: 700 !important;
+
+                       letter-spacing: 0.8 px;
+
+                       /* Deep maroon-charcoal tint for flawless legibility over the light pink base */
+
+                       color: #4a2831 !important; 
+
+                       text-transform: uppercase;
+
+                   }
+
+                   .form-control-premium {
+
+                       /* Clean solid white form blocks to make inputs look highly readable and precise */
+
+                       background: #ffffff !important;
+
+                       border: 1px solid rgba(255, 255, 255, 0.5) !important;
+
+                       border-radius: 14px;
+
+                       padding: 12px 16px;
+
+                       font-weight: 700;
+
+                       color: #2d3748 !important; 
+
+                       transition: all 0.3s ease;
+
+                       font-size: 0.95rem;
+
+                       box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+
+                   }
+
+                   .form-control-premium:focus {
+
+                       background: #ffffff !important;
+
+                       /* Strong border focus using your signature dark coral theme accent */
+
+                       border-color: #ff6b6b !important;
+
+                       box-shadow: 0 0 0 4px rgba(255, 107, 107, 0.2) !important;
+
+                       color: #000000 !important;
+
+                   }
+
+                   .form-control-premium:disabled {
+
+                       background: rgba(255, 255, 255, 0.4) !important;
+
+                       color: rgba(0, 0, 0, 0.3) !important;
+
+                       opacity: 0.7;
+
+                       cursor: not-allowed;
+
+                   }
+
+                    @keyframes dynamicGradientFlow{
+
+                        0% { background-position: 0% 50%;}
+
+                        50% {background-position: 100% 50%;}
+
+                        100% {background-position: 0% 50%;}
+
+                    }
+
+                    .animate-back-gradient{
+
+                        background-size:400% 400% !important;
+
+                        animation: dynamicGradientFlow 6s ease infinite !important;
+
+                    }
+
+                    /* --- GLASSMORPHIC COMPONENT CONTAINER FOR GRAPH LAYOUTS --- */
+
+                   .analytics-chart-panel {
+
+                       background: linear-gradient(135deg,rgba(255,154,158,0.15) 0%,rgba(254,207,239,0.15) 100%) !important;
+
+                       backdrop-filter: blur(20px) saturate(180%);
+
+                       -webkit-backdrop-filter: blur(20px) saturate(180%);
+
+                       border: 2px solid transparent !important;
+
+                       background-clip: padding-box,border-box !important;
+
+                       background-origin:padding-box,border-box !important;
+
+                       background-image:linear-gradient(rgba(255,255,255,0.8),rgba(255,255,255,0.8)), linear-gradient(135deg,rgba(255,126,95,0.4) 0%,rgba(254,207,239,0.6) 100%) !important;
+
+                       border-radius: 24px;
+
+                       padding: 2rem;
+
+                       box-shadow: 0 15px 35px rgba(255,154,158,0.12);
+
+                       transition: all 0.5s cubic-bezier(0.16,1,0.3,1);
+
+                   }
+
+                   .analytics-chart-panel:hover {
+
+                       transform:translateY(-3px);
+
+                       background-image:linear-gradient(rgba(255,255,255,0.9),rgba(255,255,255,0.9)),linear-gradient(135deg,#ff7e5f 0%,#ff6b6b 100%) !important;
+
+                       box-shadow: 0 20px 45px rgba(255, 154, 158, 0.22);
+
+                   }
+
+                    .volume-trend-badge{
+
+                        background: #ffffff !important;
+
+                       
+
+                        border:1px solid rgba(255,126,95,0.2) !important;
+
+                        color: #ff7e5f !important;
+
+                        padding:8px 16px;
+
+                        border-radius:12px;
+
+                        font-size:11px;
+
+                        display:flex;
+
+                        align-items:center;
+
+                        gap:6px;
+
+                        box-shadow: 0 4px 10px rgba(255,154,158,0.1);
+
+                    }
+
+
+
+
+ 
 
                     `}
 
@@ -570,49 +1300,553 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onToggleForm }) => {
 
                     </div>
 
-                )}
+                )}          
 
-                {/* --- 3. ANALYTICS --- */}
+                {/* --- 3. ANALYTICS (PREMIUM UI INTERFACE) --- */}
 
-                {activeTab === 'analytics' && (
+               {activeTab === 'analytics' && (
 
-                    <div className="animate-in">
+                   <div className="animate-in">
 
-                        <h2 className="fw-bold mb-4 px-2">Clinic Analytics</h2>
+                       <div className="mb-4 px-2">
 
-                        <div className="row g-4 mb-5">
+                           <h2 className="fw-bold m-0" style={{ color: '#111', letterSpacing: '-0.5px' }}>Clinic Analytics</h2>
 
-                            {[
+                           <p className="text-muted small mb-0 mt-1">Monitor real-time performance metrics and physician scheduling distributions.</p>
 
-                                { label: 'Total Booked', val: 45, col: '#007bff' },
+                       </div>
 
-                                { label: 'Walk-ins', val: 12, col: '#20c997' },
 
-                                { label: 'Completed', val: 50, col: '#ff7e5f' },
+ 
 
-                                { label: 'No-Shows', val: 7, col: '#ff6b6b' }
+                       {/* HIGH-END METRICS FILTER CONTAINER */}
 
-                            ].map((s, i) => (
+                       <div className="analytics-filter-card mb-3 shadow-sm row py-4 mx-0">
 
-                                <div key={i} className="col-6 col-md-3">
+                           
 
-                                    <div className="glass-panel p-4 text-center h-100 border-top border-4 shadow-sm" style={{ borderTopColor: s.col }}>
+                           {/* Input Group 1: Start Date */}
 
-                                        <h6 className="text-muted small fw-bold text-uppercase mb-2">{s.label}</h6>
+                           <div className="col-12 col-sm-6 col-md-3 filter-group-container">
 
-                                        <h1 className="fw-bold m-0" style={{ color: s.col }}>{s.val}</h1>
+                               <div className="d-flex align-items-center gap-3 mb-2">
 
-                                    </div>
+                                   <div className="icon-wrapper-accent" style={{ background: 'rgba(0, 123, 255, 0.1)', color: '#007bff' }}>
 
-                                </div>
+                                       📅
 
-                            ))}
+                                   </div>
 
-                        </div>
+                                   <span className="input-label-premium">Start Date</span>
 
-                    </div>
+                               </div>
 
-                )}
+                               <input 
+
+                                   type="date" 
+
+                                   className="form-control form-control-premium shadow-none" 
+
+                                   value={analyticsStartDate} 
+
+                                   onChange={(e) => setAnalyticsStartDate(e.target.value)} 
+
+                               />
+
+                           </div>
+
+
+ 
+
+                           {/* Input Group 2: End Date */}
+
+                           <div className="col-12 col-sm-6 col-md-3 filter-group-container">
+
+                               <div className="d-flex align-items-center gap-3 mb-2">
+
+                                   <div className="icon-wrapper-accent" style={{ background: 'rgba(111, 66, 193, 0.1)', color: '#6f42c1' }}>
+
+                                       ⏳
+
+                                   </div>
+
+                                   <span className="input-label-premium">End Date</span>
+
+                               </div>
+
+                               <input 
+
+                                   type="date" 
+
+                                   className="form-control form-control-premium shadow-none" 
+
+                                   value={analyticsEndDate} 
+
+                                   onChange={(e) => setAnalyticsEndDate(e.target.value)} 
+
+                               />
+
+                           </div>
+
+
+ 
+
+                           {/* Input Group 3: Department Selector */}
+
+                           <div className="col-12 col-sm-6 col-md-3 filter-group-container">
+
+                               <div className="d-flex align-items-center gap-3 mb-2">
+
+                                   <div className="icon-wrapper-accent" style={{ background: 'rgba(255, 193, 7, 0.1)', color: '#ffc107' }}>
+
+                                       🏥
+
+                                   </div>
+
+                                   <span className="input-label-premium">Department</span>
+
+                               </div>
+
+                               <select 
+
+                                   className="form-select form-control-premium shadow-none" 
+
+                                   value={analyticsDept} 
+
+                                   onChange={(e) => setAnalyticsDept(e.target.value)}
+
+                                   style={{colorScheme:'dark'}}
+
+                               >
+
+                                   <option value="">Select Wing</option>
+
+                                   <option value="GENERAL">General Medicine</option>
+
+                                   <option value="CARDIOLOGY">Cardiology</option>
+
+                                   <option value="ORTHOPEDICS">Orthopedics</option>
+
+                                   <option value="PEDIATRICS">Pediatrics</option>
+
+                               </select>
+
+                           </div>
+
+
+ 
+
+                           {/* Input Group 4: Physician Selector */}
+
+                           <div className="col-12 col-sm-6 col-md-3 filter-group-container">
+
+                               <div className="d-flex align-items-center gap-3 mb-2">
+
+                                   <div className="icon-wrapper-accent" style={{ background: 'rgba(32, 201, 151, 0.1)', color: '#20c997' }}>
+
+                                       👨‍⚕️
+
+                                   </div>
+
+                                   <span className="input-label-premium">Medical Expert</span>
+
+                               </div>
+
+                               <select 
+
+                                   className="form-select form-control-premium shadow-none" 
+
+                                   disabled={!analyticsDept} 
+
+                                   value={selectedDocId} 
+
+                                   onChange={(e) => setSelectedDocId(e.target.value)}
+
+                               >
+
+                                   <option value="">Select Professional</option>
+
+                                   {filteredDoctors.map(doc => (
+
+                                       <option key={doc.id} value={doc.id}>{doc.name}</option>
+
+                                   ))}
+
+                               </select>
+
+                           </div>
+
+                       </div>
+
+
+ 
+
+                       {/* ROW 3: CAROUSEL RENDER ENGINE LINK (Keep your carousel cards immediately beneath this code block) */}
+
+
+ 
+
+                       {/* CAROUSEL BLOCK CONTAINER */}
+
+                       {selectedDocId ? (
+
+                           <div className="d-flex flex-column align-items-center justify-content-center py-4 animate-in">
+
+                               <div className="d-flex align-items-center gap-4 w-100 justify-content-center">
+
+                                   
+
+                                   {/* Left Control Arrow */}
+
+                                   <button className="carousel-arrow" onClick={handlePrevCard} aria-label="Previous metrics panel">
+
+                                      <FaChevronLeft style={{ color:'#6c757d',fontSize:'1.1rem'}}/>
+
+                                   </button>
+
+
+ 
+
+                                   {/* 3D Flip Card Frame */}
+
+                                   <div className="analytics-carousel-wrapper">
+
+                                       <div 
+
+                                           className={`analytics-card-inner ${isFlipped[currentCardIndex] ? 'analytics-card-is-flipped' : ''}`}
+
+                                           onMouseEnter={() => toggleCardFlip(currentCardIndex, true)}
+
+                                           onMouseLeave={() => toggleCardFlip(currentCardIndex, false)}
+
+                                       >
+
+                                           {/* Front Facing View Layer */}
+
+                                           <div className="analytics-card-front shadow-sm">
+
+                                               <div className="fs-1 mb-2">{statsCards[currentCardIndex].icon}</div>
+
+                                               <h4 className="fw-bold mb-1" style={{ color: '#2c3e50', letterSpacing: '-0.5px' }}>
+
+                                                   {statsCards[currentCardIndex].label}
+
+                                               </h4>
+
+                                               <p className="small text-muted mb-0 mt-2 px-3">{statsCards[currentCardIndex].desc}</p>
+
+                                               <small className="text-secondary mt-3 opacity-50" style={{ fontSize: '11px', fontWeight: '600' }}>Hover to flip card →</small>
+
+                                           </div>
+
+
+ 
+
+                                           {/* Rear Facing View Layer (Revealed on Hover)
+
+                                            <div className="analytics-card-back shadow-lg" style={{ background: statsCards[currentCardIndex].col }}>
+
+                                               <span className="text-white text-opacity-75 small fw-bold text-uppercase mb-2" style={{ letterSpacing: '1px' }}>
+
+                                                   Total Count
+
+                                               </span>
+
+                                               {/* Injected state value directly from your backend api payload responses */}
+
+                                               {/* <h1 className="display-2 fw-bold m-0 text-white animate-in" style={{ color: '#ffffff', fontWeight: '800' }}>
+
+                                                   {statsCards[currentCardIndex].val}
+
+                                               </h1>
+
+                                               <small className="text-white text-opacity-50 mt-3" style={{ fontSize: '11px' }}>
+
+                                                   Live ClinicQ Registry Data
+
+                                               </small>
+
+                                           </div>  */}
+
+
+ 
+
+                                           {/* Back Side Card Face Layout (Revealed cleanly on Hover with Moving Gradient) */}
+
+                                           <div 
+
+                                               className="analytics-card-back shadow-lg animated-back-gradient" 
+
+                                               style={{ 
+
+                                                   background: currentCardIndex === 0 
+
+                                                       ? 'linear-gradient(-45deg, #007bff, #00c6ff, #007bff, #0056b3)' // Blue flow for Booked
+
+                                                       : currentCardIndex === 1
+
+                                                       ? 'linear-gradient(-45deg, #20c997, #0beacb, #20c997, #137356)' // Mint flow for Walk-ins
+
+                                                       : currentCardIndex === 2
+
+                                                       ? 'linear-gradient(-45deg, #ff7e5f, #ff6b6b, #feb47b, #ff7e5f)' // Peach/Coral flow for Completed
+
+                                                       : 'linear-gradient(-45deg, #ff6b6b, #ff4757, #ff6b6b, #b3323e)'  // Red/Crimson flow for No-Shows
+
+                                               }}
+
+                                           >
+
+                                               <h6 className="text-white text-opacity-75 small fw-bold text-uppercase mb-2" style={{ fontSize: '27px', color: '#ffffff', letterSpacing: '0.5px' }}>
+
+                                                   {statsCards[currentCardIndex].label} Metrics
+
+                                               </h6>
+
+                                               
+
+                                               {/* Displays your direct real-time integer from the backend API endpoint */}
+
+                                               <h1 className="display-2 fw-bold m-0 text-white animate-in" style={{ color: '#ffffff', fontWeight: '800' }}>
+
+                                                   {statsCards[currentCardIndex].val}
+
+                                               </h1>
+
+                                                {/*                                                
+
+                                               <small className="text-dark text-opacity-50 mt-3" style={{ fontSize: '17px', color: 'rgba(211, 198, 198, 0.6)' }}>
+
+                                                   ClinicQ Live Data Captured
+
+                                               </small> */}
+
+                                           </div>
+
+
+ 
+
+                                       </div>
+
+                                   </div>
+
+
+ 
+
+                                   {/* Right Control Arrow */}
+
+                                   <button className="carousel-arrow" onClick={handleNextCard} aria-label="Next metrics panel">
+
+                                      <FaChevronRight style={{ color:'#6c757d',fontSize:'1.1rem'}}/>
+
+                                   </button>
+
+                               </div>
+
+
+ 
+
+                               {/* Pagination Dots Indicators Bottom bar */}
+
+                               <div className="d-flex gap-2 mt-4 justify-content-center">
+
+                                   {statsCards.map((_, idx) => (
+
+                                       <button 
+
+                                           key={idx} 
+
+                                           onClick={() => setCurrentCardIndex(idx)} 
+
+                                           className={`dot-indicator ${currentCardIndex === idx ? 'dot-active' : ''}`}
+
+                                           aria-label={`Jump directly to panel slide index number ${idx + 1}`}
+
+                                       />
+
+                                   ))}
+
+                               </div>
+
+
+ 
+
+                               {/* --- HIGH-END GRADIENT TREND CHART VISUALIZER --- */}
+
+                               <div className="analytics-chart-panel w-100 mt-5 animate-in" style={{ maxWidth: '850px' }}>
+
+                                   <div className="d-flex justify-content-between align-items-center mb-4">
+
+                                       <div>
+
+                                           <h5 className="fw-bold m-0" style={{ color: '#4a2831',letterSpacing:'-0.3px'}}>Patient Inflow Analysis</h5>
+
+                                           <small className="text-secondary fw-medium" style={{fontSize:'12px',color:'#6c757d'}}>Timeline distribution tracking cumulative visits</small>
+
+                                       </div>
+
+                                       <span className="volume-trend-badge fw-bold">
+
+                                           <span style={{color:'#ff7e5f'}}>📈</span> Volume Trend
+
+                                       </span>
+
+                                   </div>
+
+
+ 
+
+                                   {isChartLoading ? (
+
+                                       <div className="text-center py-5">
+
+                                           <div className="spinner-border text-coral" style={{ color: '#ff7e5f' }}></div>
+
+                                       </div>
+
+                                   ) : chartData.length > 0 ? (
+
+                                       <div className='p-3 rounded-4 shadow-inner' style={{ width: '100%', height: 320,background: '#ffffff',border:'1 px solid rgba(255,154,158,0.15)',boxShadow:'inset 0 2px 8px rgba(0,0,0,0.01)'}}>
+
+                                           <ResponsiveContainer>
+
+                                               <AreaChart data={chartData} margin={{ top: 20, right: 20, left: -20, bottom: 5}}>
+
+                                                   <defs>
+
+                                                       <linearGradient id="lightSunsetMeshGradient" x1="0" y1="0" x2="0" y2="1">
+
+                                                           <stop offset="0%" stopColor="#ff7e5f" stopOpacity={0.6}/>
+
+                                                           <stop offset="40%" stopColor="#ff6b6b" stopOpacity={0.35}/>
+
+                                                           <stop offset="75%" stopColor="#fecfef" stopOpacity={0.15}/>
+
+                                                           <stop offset="100%" stopColor="#fef7ff" stopOpacity={0.02}/>
+
+                                                       </linearGradient>
+
+                                                       
+
+                                                   </defs>
+
+                                                   
+
+                                                   <CartesianGrid strokeDasharray="5 5" stroke="rgba(255,154,158,0.12)" vertical={false} />
+
+                                                   
+
+                                                   <XAxis 
+
+                                                       dataKey="displayDate" 
+
+                                                       axisLine={false} 
+
+                                                       tickLine={false} 
+
+                                                       tick={{ fill: '#7a6e71', fontSize: 12, fontWeight: 700 }} 
+
+                                                   />
+
+                                                   <YAxis 
+
+                                                       axisLine={false} 
+
+                                                       tickLine={false} 
+
+                                                       allowDecimals={false}
+
+                                                       tick={{ fill: '#7a6e71', fontSize: 12, fontWeight: 700 }} 
+
+                                                   />
+
+                                                   
+
+                                                   <Tooltip 
+
+                                                       contentStyle={{ 
+
+                                                           background: '#ffffff', 
+
+                                                           border: '1px solid rgba(255,126,95,0.2)', 
+
+                                                           borderRadius: '16px', 
+
+                                                           backdropFilter:'blur(10px)',
+
+                                                           boxShadow: '0 15px 30px rgba(255,154,158,0.15)' 
+
+                                                       }}
+
+                                                       labelStyle={{ fontWeight: '700', color: '#4a2831' }}
+
+                                                       itemStyle={{ fontWeight: '600', color: '#ff7e5f' }}
+
+                                                   />
+
+                                                   
+
+                                                   <Area 
+
+                                                       type="monotone" 
+
+                                                       dataKey="patientCount" 
+
+                                                       name="Patients Served"
+
+                                                       stroke="#ff6b6b" 
+
+                                                       strokeWidth={4.5} 
+
+                                                       fillOpacity={1} 
+
+                                                       fill="url(#lightSunsetMeshGradient)" 
+
+                                                       activeDot={{ r: 8, stroke: '#ffffff', strokeWidth: 3, fill: '#ff6b6b',style:{filter:'drop-shadow(0 4px 12px rgba(255,107,107,0.5))'} }}
+
+                                                   />
+
+                                               </AreaChart>
+
+                                           </ResponsiveContainer>
+
+                                       </div>
+
+                                   ) : (
+
+                                       <div className="text-center py-5 text-white text-opacity-40 italic small">
+
+                                           Insufficient timeline metrics generated for this timeframe.
+
+                                       </div>
+
+                                   )}
+
+                               </div>
+
+                            </div>
+
+                       ) : (
+
+                           <div className="text-center py-5 glass-panel col-lg-8 mx-auto mt-4 text-muted border-dashed border-2 animate-in" style={{ borderStyle: 'dashed' }}>
+
+                               <div className="fs-2 mb-2">📊</div>
+
+                               <h5 className="fw-bold">No Metrics Selected</h5>
+
+                               <p className="small text-muted mb-0">Please set filter options above to view specialized medical reports.</p>
+
+                           </div>
+
+                       )}
+
+                   </div>
+
+               )}
+
+
+ 
+ 
 
                 {/* --- MODAL FORM --- */}
 

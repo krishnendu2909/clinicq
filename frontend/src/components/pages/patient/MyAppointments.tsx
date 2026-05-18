@@ -301,7 +301,9 @@ import React, { useState, useEffect } from 'react';
 import axiosInstance from '../../../services/axiosInstance';
 
 
+ 
 
+import { useNavigate } from 'react-router-dom';
 
 
  
@@ -316,7 +318,7 @@ interface MyProps {
 
  
 
-  onReturnHome: () => void;
+  // onReturnHome: () => void;
 
 
  
@@ -329,7 +331,9 @@ interface MyProps {
 
  
 
-const MyAppointments: React.FC<MyProps> = ({ onNavigate, onReturnHome }) => {
+const MyAppointments: React.FC<MyProps> = ({ onNavigate }) => {
+
+  const navigate=useNavigate();
 
 
  
@@ -646,9 +650,9 @@ const MyAppointments: React.FC<MyProps> = ({ onNavigate, onReturnHome }) => {
 
           <div className="mt-auto pt-4 border-top">
 
-            <button onClick={() => { localStorage.removeItem("token"); onReturnHome(); }} className="btn w-100 d-flex align-items-center gap-2 fw-bold logout-btn text-danger border-0 py-2"
+            <button onClick={() => { localStorage.removeItem("token"); navigate('/') }} className="btn w-100 d-flex align-items-center gap-2 fw-bold logout-btn text-danger border-0 py-2 style={{fontSize:'13px'}}"
 
-              style={{fontSize:'13px'}}><span>📤</span> Log Out</button>
+              ><span>📤</span> Log Out</button>
 
           </div>
 
@@ -1068,4 +1072,3 @@ const MyAppointments: React.FC<MyProps> = ({ onNavigate, onReturnHome }) => {
  
 
 export default MyAppointments;
-

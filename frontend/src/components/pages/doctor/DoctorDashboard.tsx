@@ -1784,8 +1784,7 @@ import Swal from 'sweetalert2';
 
 import axiosInstance from '../../../services/axiosInstance';
 
-
- 
+import { useNavigate } from 'react-router-dom';
 
 interface Patient {
 
@@ -1838,6 +1837,8 @@ interface PrescriptionForm {
  
 
 const DoctorDashboard: React.FC = () => {
+
+  const navigate=useNavigate();
 
  const [patients, setPatients] = useState<Patient[]>([]);
 
@@ -2257,7 +2258,7 @@ const DoctorDashboard: React.FC = () => {
 
            }}
 
-           onClick={() => window.location.reload()}>📤 Log Out</button>
+           onClick={() => {localStorage.removeItem("token"); navigate('/');}}>📤 Log Out</button>
 
        </div>
 
