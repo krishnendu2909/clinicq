@@ -140,9 +140,9 @@ public class AdminApi {
     public ResponseEntity<AdminStatsSummaryDTO> getSummary(
             @RequestParam LocalDate startDate, 
             @RequestParam LocalDate endDate,
-            @RequestParam(required = false) Long doctorId) throws InfyHospitalException{
+            @RequestParam Long doctorId) throws InfyHospitalException{
         
-        AdminStatsSummaryDTO summary=adminService.getSummary(startDate, endDate, doctorId);
+        AdminStatsSummaryDTO summary=adminService.getSummary(doctorId, startDate, endDate);
         
         return new ResponseEntity<>(summary,HttpStatus.OK);
     }
