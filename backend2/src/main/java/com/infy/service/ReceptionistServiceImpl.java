@@ -1,27 +1,24 @@
 package com.infy.service;
 
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
 import com.infy.dto.AppointmentDTO;
 import com.infy.dto.AppointmentSearchDTO;
 import com.infy.dto.PatientDTO;
 import com.infy.dto.TokenDTO;
 import com.infy.entity.Appointment;
 import com.infy.entity.Doctor;
+import com.infy.entity.DoctorSchedule;
 import com.infy.entity.Patient;
 import com.infy.entity.Token;
 import com.infy.entity.User;
@@ -32,6 +29,7 @@ import com.infy.models.Role;
 import com.infy.models.TokenStatus;
 import com.infy.repository.AppointmentRepository;
 import com.infy.repository.DoctorRepository;
+import com.infy.repository.DoctorScheduleRepository;
 import com.infy.repository.PatientRepository;
 import com.infy.repository.TokenRepository;
 import com.infy.repository.UserRepository;
@@ -58,9 +56,28 @@ public class ReceptionistServiceImpl implements ReceptionistService{
     @Autowired
     private PasswordEncoder passwordEncoder;
     
+    @Autowired
+    private DoctorScheduleRepository doctorScheduleRepository;
+    
     ModelMapper modelMapper =new ModelMapper();
     
     public static final Logger LOGGER = LogManager.getLogger(ReceptionistServiceImpl.class);
+    
+    
+    private void refreshQueuePositions(Long doctorId)
+    {
+        List<Token> queue=tokenRepository
+                .findByDoctorIdAndDateAndStatusInOrderByPositionAsc
+                (doctorId, LocalDate.now(), List.of(TokenStatus.WAITING));
+        
+        for(int i=0;i<queue.size();i++)
+        {
+            queue.get(i).setPosition(i+1);
+        }
+        
+        tokenRepository.saveAll(queue);
+                
+    }
 
     @Override
     public TokenDTO registerWalkIn(PatientDTO dto, Long doctorId) throws InfyHospitalException {
@@ -68,6 +85,22 @@ public class ReceptionistServiceImpl implements ReceptionistService{
     // 1. Validate doctor
     Doctor doctor = doctorRepository.findById(doctorId)
             .orElseThrow(() -> new InfyHospitalException("Service.NO_DOCTOR_FOUND"));
+    
+    
+     LocalDate today = LocalDate.now();
+    DoctorSchedule schedule=doctorScheduleRepository
+           .findByDoctorIdAndDayOfWeek(doctor.getId(), today.getDayOfWeek());
+    if(schedule==null)
+    {
+        throw new InfyHospitalException("Service.DOCTOR_NOT_AVAILABLE_TODAY");
+        
+    }
+    LocalTime now =LocalTime.now();
+    
+    if(now.isBefore(schedule.getStartTime()) || now.isAfter(schedule.getEndTime()))
+    {
+        throw new InfyHospitalException("Service.DOCTOR_NOT_AVAILABLE_NOW");
+    }
     
     if (dto.getUser() == null) {
         throw new InfyHospitalException("Service.USER_DETAILS_REQUIRED");
@@ -117,8 +150,13 @@ public class ReceptionistServiceImpl implements ReceptionistService{
     appointment.setType(AppointmentType.WALK_IN);
     
     Appointment appointment1=appointmentRepository.save(appointment);
+    
     List<Token> queue=tokenRepository
-            .findByDoctorIdAndDateOrderByPositionAsc(appointment.getDoctor().getId(), LocalDate.now());
+            .findByDoctorIdAndDateAndStatusInOrderByPositionAsc
+            (appointment.getDoctor().getId(), 
+                    LocalDate.now(),
+                    List.of(TokenStatus.WAITING));
+    
     int nextPosition=queue.size()+1;
 
     Token token = new Token();
@@ -137,6 +175,7 @@ public class ReceptionistServiceImpl implements ReceptionistService{
     return modelMapper.map(token, TokenDTO.class);
 
     }
+
 
     @Override
     public TokenDTO checkIn(Long appointmentId) throws InfyHospitalException {
@@ -168,12 +207,14 @@ public class ReceptionistServiceImpl implements ReceptionistService{
 
     
     List<Token> queue=tokenRepository
-            .findByDoctorIdAndDateOrderByPositionAsc(appointment.getDoctor().getId(), LocalDate.now());
+            .findByDoctorIdAndDateAndStatusInOrderByPositionAsc
+            (appointment.getDoctor().getId(), LocalDate.now(), List.of(TokenStatus.WAITING));
     int nextPosition=queue.size()+1;
     
     token.setPosition(nextPosition);
     
     Token token1 = tokenRepository.save(token);
+    refreshQueuePositions(appointment.getDoctor().getId());
     return modelMapper.map(token1, TokenDTO.class);
     }
 
@@ -202,11 +243,21 @@ public class ReceptionistServiceImpl implements ReceptionistService{
             .stream()
             .filter(t->t.getStatus()==TokenStatus.WAITING).collect(Collectors.toList());
 
-    if (tokens.isEmpty()) {
-    throw new InfyHospitalException("Service.NO_QUEUE_FOUND");
-    }
-
     return tokens.stream().map(t -> modelMapper.map(t, TokenDTO.class)).collect(Collectors.toList());
+    }
+    
+    @Override
+    public List<TokenDTO> getAllQueues() {
+
+       List<Token> tokens = tokenRepository
+               .findByDateAndStatusOrderByDoctorIdAscPositionAsc(
+                       LocalDate.now(),
+                       TokenStatus.WAITING
+               );
+
+       return tokens.stream()
+               .map(t -> modelMapper.map(t, TokenDTO.class))
+               .toList();
     }
     
     //get all appointments based on today date
@@ -215,12 +266,9 @@ public class ReceptionistServiceImpl implements ReceptionistService{
         
         LocalDate today=LocalDate.now();
         List<Appointment> appointments=appointmentRepository.findByTimeSlot_SlotDate(today);
-        
-        if(appointments.isEmpty())
-        {
-            throw new InfyHospitalException("Service.NO_UPCOMING_APPOINTMENT_FOUND");
-        }
+
         return appointments.stream()
+                .filter(a->a.getStatus()!=AppointmentStatus.CANCELLED)
                 .map(t->modelMapper.map(t, AppointmentDTO.class))
                 .collect(Collectors.toList());
         
@@ -263,8 +311,27 @@ public class ReceptionistServiceImpl implements ReceptionistService{
         
         Long oldDoctorId =token.getDoctor().getId();
         
+        LocalDate today = LocalDate.now();
+        DoctorSchedule schedule=doctorScheduleRepository
+                .findByDoctorIdAndDayOfWeek(newDoctor.getId(), today.getDayOfWeek());
+        if(schedule==null)
+        {
+            throw new InfyHospitalException("Service.DOCTOR_NOT_AVAILABLE_TODAY");
+            
+        }
+        
+        LocalTime now =LocalTime.now();
+        
+        if(now.isBefore(schedule.getStartTime()) || now.isAfter(schedule.getEndTime()))
+        {
+            throw new InfyHospitalException("Service.DOCTOR_NOT_AVAILABLE_NOW");
+        }
+        
         List<Token> oldQueue=tokenRepository
-                .findByDoctorIdAndDateOrderByPositionAsc(oldDoctorId, LocalDate.now());
+                .findByDoctorIdAndDateAndStatusInOrderByPositionAsc
+                (oldDoctorId,
+                        LocalDate.now(),
+                        List.of(TokenStatus.WAITING));
         
         oldQueue.removeIf(t->t.getId().equals(tokenId));
         
@@ -274,16 +341,14 @@ public class ReceptionistServiceImpl implements ReceptionistService{
         }
         
         tokenRepository.saveAll(oldQueue);
-    
-        Token nextToken=tokenRepository
-                .findTopByDoctorIdAndDateOrderByTokenNumberDesc(newDoctor.getId(), LocalDate.now());
-        
-        int nextTokenNumber=(nextToken==null)?1 :nextToken.getTokenNumber()+1;
+
         int nextPosition=tokenRepository
-                .findByDoctorIdAndDateOrderByPositionAsc(newDoctor.getId(), LocalDate.now()).size()+1;
+                .findByDoctorIdAndDateAndStatusInOrderByPositionAsc
+                (newDoctor.getId(),
+                        LocalDate.now(),
+                        List.of(TokenStatus.WAITING)).size()+1;
         
         token.setDoctor(newDoctor);
-        token.setTokenNumber(nextTokenNumber);
         token.setPosition(nextPosition);
         token.setStatus(TokenStatus.WAITING);
         
@@ -295,6 +360,8 @@ public class ReceptionistServiceImpl implements ReceptionistService{
         }
         
         Token res=tokenRepository.save(token);
+        refreshQueuePositions(oldDoctorId);
+        refreshQueuePositions(newDoctor.getId());
         return modelMapper.map(res, TokenDTO.class);
         
     }
@@ -303,10 +370,11 @@ public class ReceptionistServiceImpl implements ReceptionistService{
     public void reorderQueue(Long doctorId,List<Long> tokenIds) throws InfyHospitalException
     {
         List<Token> tokens=tokenRepository
-                .findByDoctorIdAndDateOrderByPositionAsc(doctorId, LocalDate.now())
-                .stream()
-                .filter(token->token.getStatus()==TokenStatus.WAITING)
-                .collect(Collectors.toList());
+                .findByDoctorIdAndDateAndStatusInOrderByPositionAsc
+                (doctorId,
+                        LocalDate.now(),
+                        List.of(TokenStatus.WAITING));
+        
         
         Map<Long,Token> tokenMap=tokens
                 .stream()
@@ -334,3 +402,4 @@ public class ReceptionistServiceImpl implements ReceptionistService{
     }
 
 }
+ 
