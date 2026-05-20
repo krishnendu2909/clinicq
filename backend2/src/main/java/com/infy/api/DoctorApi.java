@@ -114,4 +114,31 @@ public class DoctorApi {
         String successMessage=environment.getProperty("API.PRESCRIPTION_SUCCESS");
         return new ResponseEntity<>(successMessage,HttpStatus.OK);
     }
+    
+    @PreAuthorize("hasRole('DOCTOR')")
+    @PutMapping("/pause")
+    @Operation(summary = "Pauses doctor consultation")
+    public ResponseEntity<String> pause()
+            throws InfyHospitalException{
+
+        Long doctorId=getLoggedInDoctorId();
+        doctorService.pauseDoctor(doctorId);
+        
+        String successMessage=environment.getProperty("API.PAUSE_SUCCESS");
+        return new ResponseEntity<>(successMessage,HttpStatus.OK);
+    }
+    
+    @PreAuthorize("hasRole('DOCTOR')")
+    @PutMapping("/resume")
+    @Operation(summary = "Resumes doctor consultation")
+    public ResponseEntity<String> resume()
+            throws InfyHospitalException{
+
+        Long doctorId=getLoggedInDoctorId();
+        doctorService.resumeDoctor(doctorId);
+        
+        String successMessage=environment.getProperty("API.RESUME_SUCCESS");
+        return new ResponseEntity<>(successMessage,HttpStatus.OK);
+    }
 }
+ 
