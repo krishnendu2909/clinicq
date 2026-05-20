@@ -7,6 +7,7 @@ import com.infy.dto.AdminDTO;
 import com.infy.dto.AppointmentDTO;
 import com.infy.dto.DoctorDTO;
 import com.infy.dto.PrescriptionDTO;
+import com.infy.dto.QueuePositionDTO;
 import com.infy.dto.TimeSlotDTO;
 import com.infy.exception.InfyHospitalException;
 import com.infy.models.Department;
@@ -34,13 +35,26 @@ public interface PatientService {
     List<AppointmentDTO> getAllAppointments(Long patientId) throws InfyHospitalException;
 
     //US4
-    List<AppointmentDTO> getVisitHistoryFiltered(Long patientId, LocalDate startDate, LocalDate endDate, Long doctorId) throws InfyHospitalException;
-
+    //List<AppointmentDTO> getVisitHistoryFiltered(Long patientId, LocalDate startDate, LocalDate endDate, Long doctorId) throws InfyHospitalException;
+    List<AppointmentDTO> getFilteredHistory(Long patientId,  LocalDate startDate, LocalDate endDate,Long doctorId)
+            throws InfyHospitalException;
 
 
     AdminDTO getBookingRules() throws InfyHospitalException;
     //US18
     PrescriptionDTO getPatientPrescription(Long patientId, Long appointmentId) throws InfyHospitalException;
+    
+    //US09
+    
+
+    
+    QueuePositionDTO getQueuePositionByPhone(String phoneNumber) throws InfyHospitalException;
+
+    /**
+        * Resolves queue position by patient's numeric ID (passed as a String from the
+        * request param, matching the original PatientController signature).
+        */
+    QueuePositionDTO getQueuePosition(Long patientId) throws InfyHospitalException;
 
     
 
