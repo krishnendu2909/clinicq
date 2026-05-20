@@ -15,4 +15,9 @@ public interface DoctorService {
     void updateTokenStatus(Long tokenId, String status) throws InfyHospitalException;
 
     void saveOrUpdatePrescription(PrescriptionDTO dto) throws InfyHospitalException;
+
+    void pauseDoctor(Long doctorId) throws InfyHospitalException;
+
+    void resumeDoctor(Long doctorId) throws InfyHospitalException;
 }
+ 
