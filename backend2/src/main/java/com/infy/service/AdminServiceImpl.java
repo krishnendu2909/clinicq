@@ -2,7 +2,7 @@ package com.infy.service;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +16,6 @@ import com.infy.dto.AdminStatsSummaryDTO;
 import com.infy.dto.DailyPatientCountDTO;
 import com.infy.dto.DoctorDTO;
 import com.infy.dto.DoctorScheduleDTO;
-import com.infy.dto.DoctorStatsDTO;
 import com.infy.dto.UserDTO;
 import com.infy.entity.Admin;
 import com.infy.entity.Doctor;
@@ -96,10 +95,6 @@ public class AdminServiceImpl implements AdminService{
             // Link them together
             sDto.setDoctor(dDto);
             scheduleDTOs.add(sDto);
-        }
-
-        if (scheduleDTOs.isEmpty()) {
-            throw new InfyHospitalException("No doctor schedules found.");
         }
 
         return scheduleDTOs;
@@ -303,97 +298,37 @@ public class AdminServiceImpl implements AdminService{
     // METHODS FOR STATS
     
     @Override
-    public AdminStatsSummaryDTO getSummary(LocalDate startDate, LocalDate endDate, Long doctorId) throws InfyHospitalException {
-        LocalDateTime start=startDate.atStartOfDay();
-        LocalDateTime end =endDate.atTime(LocalTime.MAX);
+    public AdminStatsSummaryDTO getSummary( Long doctorId, LocalDate startDate, LocalDate endDate) throws InfyHospitalException {
         
-        List<Doctor> doctors;
+        AdminStatsSummaryDTO dto=new AdminStatsSummaryDTO();
         
-        if (doctorId!=null) {
-            // fetch doctor by doctorId 
-            Doctor doctor=doctorRepository.findById(doctorId)
-                    .orElseThrow(()->new InfyHospitalException("Service.NO_DOCTOR_FOUND"));
-            
-            doctors=List.of(doctor);
-            
-        }else {
-            // fetch all doctors
-            doctors=doctorRepository.findAll();
-        }
-                
-        List<DoctorStatsDTO> doctorBreakdown=new ArrayList<>();
+        dto.setTotalAppointments(appointmentRepository.getTotalAppointments(doctorId, startDate, endDate));
         
-        long totalAppointments=0;
-        long totalWalkIns=0;
-        long totalCompleted=0;
-        long totalNoShows=0;
+        dto.setTotalWalkIns(appointmentRepository.getWalkInCount(doctorId, AppointmentType.WALK_IN, startDate, endDate));
         
-        for (Doctor doctor:doctors) {
-            Long appointments=tokenRepository.countByDoctorAndCheckInTimeBetween(doctor, start, end);
-            Long walkIns=tokenRepository.countByAppointmentType(doctor, AppointmentType.WALK_IN, start, end);
-            Long completed=tokenRepository.countByAppointmentStatus(doctor, AppointmentStatus.COMPLETED, start, end);
-            Long noShows=tokenRepository.countByAppointmentStatus(doctor, AppointmentStatus.NO_SHOW, start, end);
-            
-            DoctorStatsDTO dto=new DoctorStatsDTO();
-            dto.setDoctorId(doctor.getId());
-            dto.setDoctorName(doctor.getName());
-            dto.setAppointmentCount(appointments);
-            dto.setCompletedCount(completed);
-            dto.setNoShowCount(noShows);
-            dto.setWalkInCount(walkIns);
-            
-            totalAppointments+=appointments;
-            totalWalkIns+=walkIns;
-            totalCompleted+=completed;
-            totalNoShows+=noShows;
-
-        }
-                    
-        AdminStatsSummaryDTO summary=new AdminStatsSummaryDTO();
-        summary.setDoctorBreakdown(doctorBreakdown);
-        summary.setTotalAppointments(totalAppointments);
-        summary.setTotalCompleted(totalCompleted);
-        summary.setTotalNoShows(totalNoShows);
-        summary.setTotalWalkIns(totalWalkIns);
+        dto.setTotalCompleted(appointmentRepository.countByAppointmentStatus(doctorId, AppointmentStatus.COMPLETED, startDate, endDate));
         
-        return summary;
+        dto.setTotalNoShows(appointmentRepository.countByAppointmentStatus(doctorId, AppointmentStatus.NO_SHOW, startDate, endDate));
+        
+        return dto;
     }
     
     @Override
     public List<DailyPatientCountDTO> getChartData(LocalDate startDate, LocalDate endDate, Long doctorId) throws InfyHospitalException{
+        
+        List<Object[]> results=appointmentRepository.getDailyPatientCounts(doctorId, startDate, endDate);
+                
         List<DailyPatientCountDTO> chartData=new ArrayList<>();
         
-        LocalDate currentDate=startDate;
-        Doctor doctor=null;
-        
-        if (doctorId!=null) {
-            doctor= doctorRepository.findById(doctorId)
-                    .orElseThrow(()->new InfyHospitalException("Service.NO_DOCTOR_FOUND"));
-        }
-        
-        while (!currentDate.isAfter(endDate)) {
-            LocalDateTime start=currentDate.atStartOfDay();
-            LocalDateTime end=currentDate.atTime(LocalTime.MAX);
-            
-            Long patientCount;
-            
-            if (doctor!=null) {
-                patientCount=tokenRepository.countByDoctorAndCheckInTimeBetween(doctor, start, end);
-                
-            }else {
-                patientCount=tokenRepository.countByCheckInTimeBetween(start, end);
-            }
-            
+        for (Object[] row:results) {
             DailyPatientCountDTO dto=new DailyPatientCountDTO();
-            dto.setDate(currentDate);
-            dto.setPatientCount(patientCount);
+            dto.setDate((LocalDate)row[0]);
+            dto.setPatientCount((Long)row[1]);
             
             chartData.add(dto);
-            
-            //Move to next day
-            currentDate=currentDate.plusDays(1);
         }
         
         return chartData;
     }
 }
+ 
