@@ -1,7 +1,9 @@
 package com.infy.service;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -16,13 +18,16 @@ import com.infy.dto.AdminDTO;
 import com.infy.dto.AppointmentDTO;
 import com.infy.dto.DoctorDTO;
 import com.infy.dto.PrescriptionDTO;
+import com.infy.dto.QueuePositionDTO;
 import com.infy.dto.TimeSlotDTO;
 import com.infy.entity.Admin;
 import com.infy.entity.Appointment;
 import com.infy.entity.Doctor;
+import com.infy.entity.DoctorSchedule;
 import com.infy.entity.Patient;
 import com.infy.entity.Prescription;
 import com.infy.entity.TimeSlot;
+import com.infy.entity.Token;
 import com.infy.exception.InfyHospitalException;
 import com.infy.models.AppointmentStatus;
 import com.infy.models.AppointmentType;
@@ -30,9 +35,11 @@ import com.infy.models.Department;
 import com.infy.repository.AdminRepository;
 import com.infy.repository.AppointmentRepository;
 import com.infy.repository.DoctorRepository;
+import com.infy.repository.DoctorScheduleRepository;
 import com.infy.repository.PatientRepository;
 import com.infy.repository.PrescriptionRepository;
 import com.infy.repository.TimeSlotRepository;
+import com.infy.repository.TokenRepository;
 
 
 @Service
@@ -55,7 +62,13 @@ public class PatientServiceImpl implements PatientService{
     private AdminRepository adminRepository;
     
     @Autowired
+    private TokenRepository tokenRepository;
+    
+    @Autowired
     private PrescriptionRepository prescriptionRepository;
+    
+    @Autowired
+    private DoctorScheduleRepository doctorScheduleRepository;
     
     ModelMapper modelMapper =new ModelMapper();
 
@@ -67,12 +80,12 @@ public class PatientServiceImpl implements PatientService{
     public List<DoctorDTO> getDoctorsByDepartment(Department department) throws InfyHospitalException
     {
         List<Doctor> doctors=doctorRepository.findByDepartment(department);
+        
+        List<DoctorDTO> doctorDTOs=new ArrayList<>();
         if(doctors.isEmpty())
         {
-            throw new InfyHospitalException("Service.NO_DOCTORS_FOUND");
+            return doctorDTOs;
         }
-        List<DoctorDTO> doctorDTOs=new ArrayList<>();
-        
         for(Doctor doctor:doctors)
         {
             DoctorDTO doctorDTO=modelMapper.map(doctor, DoctorDTO.class);        
@@ -95,15 +108,17 @@ public class PatientServiceImpl implements PatientService{
     @Override
     public List<TimeSlotDTO> getAllSlots(Long doctorId,LocalDate date) throws InfyHospitalException 
     {
-        Doctor doctor=doctorRepository.findById(doctorId).orElseThrow(
-                ()->new InfyHospitalException("Service.NO_DOCTOR_FOUND") );
+//        Doctor doctor=doctorRepository.findById(doctorId).orElseThrow(
+//                ()->new InfyHospitalException("Service.NO_DOCTOR_FOUND") );
         
         List<TimeSlot> timeSlots=timeSlotRepository.findByDoctorIdAndSlotDate(doctorId, date);
+        
+        List<TimeSlotDTO> timeSlotDTOs=new ArrayList<>();
+        
         if(timeSlots.isEmpty())
         {
-            throw new InfyHospitalException("Service.NO_TIMESLOTS_FOUND");
+            return timeSlotDTOs;
         }
-        List<TimeSlotDTO> timeSlotDTOs=new ArrayList<>();
                 
                 for(TimeSlot timeSlot:timeSlots)
                 {
@@ -177,20 +192,9 @@ public class PatientServiceImpl implements PatientService{
     @Override
     public List<AppointmentDTO> getUpcomingAppointments(Long patientId) throws InfyHospitalException {
 
-    // 1. Check patient exists
-    Patient patient = patientRepository.findById(patientId)
-            .orElseThrow(() -> new InfyHospitalException("Service.NO_PATIENT_FOUND"));
-
-    //  2. Fetch appointments
     List<Appointment> appointments = appointmentRepository.findByPatientId(patientId);
 
-    // 3. Check if patient has any appointments
-    if (appointments.isEmpty()) {
-        throw new InfyHospitalException("Service.APPOINTMENT_NOT_FOUND");
-    }
-
-    // 4. Filter upcoming (BOOKED)
-    List<AppointmentDTO> result = appointments.stream()
+    return appointments.stream()
             .filter(a -> a.getStatus() == AppointmentStatus.BOOKED)
             .sorted(
                 Comparator.comparing((Appointment a) -> a.getTimeSlot().getSlotDate())
@@ -198,13 +202,6 @@ public class PatientServiceImpl implements PatientService{
             )
             .map(a -> modelMapper.map(a, AppointmentDTO.class))
             .toList();
-
-    //  5. If no upcoming appointments
-    if (result.isEmpty()) {
-        throw new InfyHospitalException("Service.NO_UPCOMING_APPOINTMENT_FOUND");
-    }
-
-    return result;
     }
 
     
@@ -213,32 +210,20 @@ public class PatientServiceImpl implements PatientService{
     @Override
     public List<AppointmentDTO> getAllAppointments(Long patientId) throws InfyHospitalException {
 
-    // 1. Check patient exists
-    Patient patient = patientRepository.findById(patientId)
-            .orElseThrow(() -> new InfyHospitalException("Service.NO_PATIENT_FOUND"));
-
-    //  2. Fetch appointments
     List<Appointment> appointments = appointmentRepository.findByPatientId(patientId);
 
-    // 3. Check if patient has any appointments
-    if (appointments.isEmpty()) {
-        throw new InfyHospitalException("Service.APPOINTMENT_NOT_FOUND");
-    }
 
-    List<AppointmentDTO> result = appointments.stream()
+    return appointments.stream()
             .sorted(
-                Comparator.comparing((Appointment a) -> a.getTimeSlot().getSlotDate())
-                          .thenComparing(a -> a.getTimeSlot().getStartTime())
-            )
+                Comparator.<Appointment,LocalDateTime>comparing( a ->
+                a.getTimeSlot()!=null ? 
+                    a.getTimeSlot().getSlotDate().atTime(a.getTimeSlot().getStartTime())
+                        :a.getCreatedAt())
+                .reversed()
+                )
+            
             .map(a -> modelMapper.map(a, AppointmentDTO.class))
             .toList();
-
-    //  5. If no appointments
-    if (result.isEmpty()) {
-        throw new InfyHospitalException("Service.APPOINTMENT_NOT_FOUND");
-    }
-
-    return result;
     }
 
 
@@ -250,6 +235,12 @@ public class PatientServiceImpl implements PatientService{
 
         Appointment appointment = appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new InfyHospitalException("Service.APPOINTMENT_NOT_FOUND"));
+        
+        Token token=tokenRepository.findByAppointmentId(appointmentId).orElse(null);
+        if(token!=null)
+        {
+                throw new InfyHospitalException("Service.CANCELLATION_NOT_ALLOWED");
+        }
         
         if(appointment.getStatus().equals(AppointmentStatus.CANCELLED))
         {
@@ -334,31 +325,166 @@ public class PatientServiceImpl implements PatientService{
 
     
     @Override
-    public List<AppointmentDTO> getVisitHistoryFiltered(
-    Long patientId,
-    LocalDate startDate,
-    LocalDate endDate,
-    Long doctorId) throws InfyHospitalException {
-
-    patientRepository.findById(patientId)
-            .orElseThrow(() -> new InfyHospitalException("Service.NO_PATIENT_FOUND"));
-
-    if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
-        throw new InfyHospitalException("Service.INVALID_TIME_RANGE");
-    }
-
-    List<AppointmentDTO>appointments= appointmentRepository
-            .findFilteredHistory(patientId, doctorId, startDate, endDate)
-            .stream()
-            .map(a -> modelMapper.map(a, AppointmentDTO.class))
-            .toList();
-    
-    if(appointments.isEmpty())
+    public List<AppointmentDTO> getFilteredHistory(
+           Long patientId,
+           LocalDate startDate,
+           LocalDate endDate,
+           Long doctorId
+    ) throws InfyHospitalException
     {
-        throw new InfyHospitalException("Service.NO_HISTORY_FOUND");
-    }
-    
-    return appointments;
+
+       List<Appointment> appointments =
+               appointmentRepository.findByPatientIdAndStatus(
+                       patientId,
+                       AppointmentStatus.COMPLETED
+               );
+
+       // FILTER BY DOCTOR
+
+       if(doctorId != null)
+       {
+           appointments = appointments.stream()
+                   .filter(a ->
+                           a.getDoctor() != null
+                           &&
+                           a.getDoctor().getId().equals(doctorId)
+                   )
+                   .toList();
+       }
+
+       // FILTER BY START DATE
+
+       if(startDate != null)
+       {
+           appointments = appointments.stream()
+                   .filter(a -> {
+
+                       LocalDate appointmentDate;
+
+                       if(a.getTimeSlot() != null)
+                       {
+                           appointmentDate =
+                                   a.getTimeSlot().getSlotDate();
+                       }
+                       else
+                       {
+                           appointmentDate =
+                                   a.getCreatedAt().toLocalDate();
+                       }
+
+                       return !appointmentDate.isBefore(startDate);
+
+                   })
+                   .toList();
+       }
+
+       // FILTER BY END DATE
+
+       if(endDate != null)
+       {
+           appointments = appointments.stream()
+                   .filter(a -> {
+
+                       LocalDate appointmentDate;
+
+                       if(a.getTimeSlot() != null)
+                       {
+                           appointmentDate =
+                                   a.getTimeSlot().getSlotDate();
+                       }
+                       else
+                       {
+                           appointmentDate =
+                                   a.getCreatedAt().toLocalDate();
+                       }
+
+                       return !appointmentDate.isAfter(endDate);
+
+                   })
+                   .toList();
+       }
+
+       // SORT MOST RECENT FIRST
+
+       appointments = appointments.stream()
+               .sorted((a1, a2) -> {
+
+                   LocalDateTime d1;
+
+                   if(a1.getTimeSlot() != null)
+                   {
+                       d1 = LocalDateTime.of(
+                               a1.getTimeSlot().getSlotDate(),
+                               a1.getTimeSlot().getStartTime()
+                       );
+                   }
+                   else
+                   {
+                       d1 = a1.getCreatedAt();
+                   }
+
+                   LocalDateTime d2;
+
+                   if(a2.getTimeSlot() != null)
+                   {
+                       d2 = LocalDateTime.of(
+                               a2.getTimeSlot().getSlotDate(),
+                               a2.getTimeSlot().getStartTime()
+                       );
+                   }
+                   else
+                   {
+                       d2 = a2.getCreatedAt();
+                   }
+
+                   return d2.compareTo(d1);
+
+               })
+               .toList();
+
+       return appointments.stream()
+               .map(a -> {
+
+                   AppointmentDTO dto =
+                           modelMapper.map(a, AppointmentDTO.class);
+
+                   LocalDate appointmentDate;
+
+                   if(a.getTimeSlot() != null)
+                   {
+                       appointmentDate =
+                               a.getTimeSlot().getSlotDate();
+                   }
+                   else
+                   {
+                       appointmentDate =
+                               a.getCreatedAt().toLocalDate();
+                   }
+                  
+
+                   LocalTime appointmentTime;
+
+                   if(a.getTimeSlot() != null)
+                   {
+                       appointmentTime =
+                               a.getTimeSlot().getStartTime();
+                   }
+                   else
+                   {
+                       appointmentTime =
+                               a.getCreatedAt().toLocalTime();
+                   }
+
+                   TimeSlotDTO timeSlot=new TimeSlotDTO();
+                   timeSlot.setSlotDate(appointmentDate);
+                   timeSlot.setStartTime(appointmentTime);
+                   dto.setTimeSlot(timeSlot);
+                  
+
+                   return dto;
+
+               })
+               .toList();
     }
     
     @Override
@@ -385,5 +511,105 @@ public class PatientServiceImpl implements PatientService{
         return modelMapper.map(p, PrescriptionDTO.class);
         
     }
-    
+
+       // -------------------------------------------------------
+       // Queue Position (merged from PatientController)
+       // -------------------------------------------------------
+
+       /**
+        * Resolves queue position by patient's numeric ID (passed as a String from the
+        * request param, matching the original PatientController signature).
+        */
+       @Override
+       public QueuePositionDTO getQueuePosition(Long patientId) throws InfyHospitalException {
+
+           Patient patient = patientRepository.findById(patientId)
+                   .orElseThrow(() -> new InfyHospitalException("Service.NO_PATIENT_FOUND"));
+
+           return buildQueuePosition(patient);
+       }
+
+       /**
+        * Resolves queue position by patient's phone number.
+        */
+       @Override
+       public QueuePositionDTO getQueuePositionByPhone(String phoneNumber)
+               throws InfyHospitalException {
+
+           Patient patient = patientRepository.findByPhone(phoneNumber.trim())
+                   .orElseThrow(() -> new InfyHospitalException("Service.NO_PATIENT_FOUND"));
+
+           return buildQueuePosition(patient);
+       }
+
+       // -------------------------------------------------------
+       // Private helper – shared logic for queue position lookup
+       // -------------------------------------------------------
+
+       private QueuePositionDTO buildQueuePosition(Patient patient)
+               throws InfyHospitalException {
+
+           LocalDate today = LocalDate.now();
+
+           // Find all tokens for this patient today, most-recent first
+           List<Token> patientTokens = tokenRepository.findByPatientIdAndDate(
+                   patient.getId(), today);
+
+           if (patientTokens.isEmpty()) {
+               throw new InfyHospitalException("Service.NO_ACTIVE_TOKEN_FOUND");
+           }
+
+           // Most-recent check-in
+           Token currentToken = patientTokens.stream()
+                   .max(Comparator.comparing(Token::getCheckInTime))
+                   .orElseThrow(() -> new InfyHospitalException("Service.NO_ACTIVE_TOKEN_FOUND"));
+
+           Integer position=currentToken.getPosition();
+
+
+
+           Doctor doctor = currentToken.getDoctor();
+           
+           DoctorSchedule schedule=doctorScheduleRepository
+                   .findByDoctorIdAndDayOfWeek(doctor.getId(), today.getDayOfWeek());
+           
+           Integer slotDuration=schedule.getSlotDuration();
+           
+         int buffer=5;
+         int effectiveSlot=slotDuration+buffer;
+         long estimatedWaitMinutes=(long)(position-1)*effectiveSlot;
+         
+         long currentPauseMinutes=0;
+         if(Boolean.TRUE.equals(doctor.getPaused()))
+         {
+                     currentPauseMinutes=Duration.between(doctor.getPausedAt(), LocalDateTime.now()).toMinutes();
+         }
+         
+         Long totalPausedMinutes=doctor.getTotalPausedMinutes();
+         if(totalPausedMinutes==null)
+         {
+                 totalPausedMinutes=0L;
+             
+         }
+         
+         estimatedWaitMinutes+=totalPausedMinutes+currentPauseMinutes;
+         if(currentToken.getPosition()==0)
+         {
+                 estimatedWaitMinutes=0;
+         }
+
+           return new QueuePositionDTO(
+                   patient.getId().toString(),
+                   patient.getName(),
+                   currentToken.getTokenDisplay(),
+                   position,
+                   currentToken.getStatus().toString(),
+                   doctor.getName(),
+                   doctor.getDepartment().toString(),
+                   doctor.getPaused(),
+                   (int) estimatedWaitMinutes,
+                   currentToken.getCheckInTime()
+           );
+       }
 }
+ 
