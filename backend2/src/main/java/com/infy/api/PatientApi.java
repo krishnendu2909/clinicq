@@ -28,6 +28,7 @@ import com.infy.dto.AppointmentDTO;
 import com.infy.dto.AppointmentRequestDTO;
 import com.infy.dto.DoctorDTO;
 import com.infy.dto.PrescriptionDTO;
+import com.infy.dto.QueuePositionDTO;
 import com.infy.dto.TimeSlotDTO;
 import com.infy.entity.Patient;
 import com.infy.entity.User;
@@ -42,6 +43,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
@@ -244,7 +246,7 @@ public class PatientApi {
         Long patientId = getLoggedInPatientId();
 
         return new ResponseEntity<>(
-                patientService.getVisitHistoryFiltered(
+                patientService.getFilteredHistory(
                         patientId, startDate, endDate, doctorId),
                 HttpStatus.OK
         );
@@ -277,6 +279,47 @@ public class PatientApi {
         
     }
     
-    
+    // -------------------------------------------------------
+       // Queue Position  (merged from PatientController)
+       // Accessible without login so patients at the clinic kiosk
+       // can check their queue number by patient-ID or phone.
+       // -------------------------------------------------------
 
+       /**
+        * GET clinicq/patient/queue-position?patientId=123
+        * GET clinicq/patient/queue-position?phoneNumber=9876543210
+        *
+        * Mirrors the original PatientController endpoints but lives here
+        * so we have a single patient-facing REST controller.
+        *
+        * No @PreAuthorize so the kiosk / display board can call it
+        * without a JWT (open to any authenticated or anonymous client).
+        * Adjust the security rule in SecurityConfig if tighter control
+        * is needed.
+     * @throws InfyHospitalException 
+        */
+       @GetMapping("/queue-position")
+       @Operation(summary = "Get queue position by patient ID or phone number")
+       public ResponseEntity<QueuePositionDTO> getQueuePosition(
+               @Pattern(
+                   regexp = "^[6-9][0-9]{9}$",
+                   message = "{patient.phone.invalid}"
+               )
+               @RequestParam(required = false) String phoneNumber) 
+                       throws InfyHospitalException {
+     
+                  Long patientId = getLoggedInPatientId();
+               QueuePositionDTO queuePosition;            
+                if (phoneNumber != null && !phoneNumber.trim().isEmpty()) {
+                   queuePosition = patientService.getQueuePositionByPhone(phoneNumber);
+               }
+               
+                else  {
+                   queuePosition = patientService.getQueuePosition(patientId);
+               }
+
+               return ResponseEntity.ok(queuePosition);
+
+
+}
 }
