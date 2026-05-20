@@ -1,5 +1,6 @@
 package com.infy.service;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -75,7 +76,7 @@ public class DoctorServiceImpl implements DoctorService {
     
     private void reorderQueue(Long doctorId)
     {
-        List<TokenStatus> activeStatuses=List.of(TokenStatus.WAITING ,TokenStatus.IN_CONSULTATION);
+        List<TokenStatus> activeStatuses=List.of(TokenStatus.WAITING);
         List<Token> queue=tokenRepository
                 .findByDoctorIdAndDateAndStatusInOrderByPositionAsc(doctorId, LocalDate.now(), activeStatuses);
         
@@ -102,7 +103,11 @@ public class DoctorServiceImpl implements DoctorService {
         
             case IN_CONSULTATION:
                 appointment.setStatus(AppointmentStatus.IN_CONSULTATION);
+                token.setPosition(0);
+                tokenRepository.save(token);
+                reorderQueue(token.getDoctor().getId());
                 break;
+                
             case COMPLETED:
                 appointment.setStatus(AppointmentStatus.COMPLETED);
                 
@@ -114,17 +119,18 @@ public class DoctorServiceImpl implements DoctorService {
                     prescription.setStatus(PrescriptionStatus.FINAL);
                     prescriptionRepository.save(prescription);
                 }
-                
-                
-                reorderQueue(token.getDoctor().getId());
-                
+                token.setPosition(0);
+                tokenRepository.save(token);                
+                reorderQueue(token.getDoctor().getId());            
                 break;
+                
             case NO_SHOW:
                 appointment.setStatus(AppointmentStatus.NO_SHOW);
-                
-                reorderQueue(token.getDoctor().getId());
-                
+                token.setPosition(0);
+                tokenRepository.save(token);
+                reorderQueue(token.getDoctor().getId());                                
                 break;
+                
             default:
                 break;
     
@@ -170,7 +176,8 @@ public class DoctorServiceImpl implements DoctorService {
             
         prescription.setDiagnosis(dto.getDiagnosis());
         prescription.setNotes(dto.getNotes());
-        
+        prescription.setHeartRate(dto.getHeartRate());
+        prescription.setBloodPressure(dto.getBloodPressure());
         if(appointment.getStatus().equals(AppointmentStatus.IN_CONSULTATION))
         {
             prescription.setStatus(PrescriptionStatus.DRAFT);
@@ -212,4 +219,58 @@ public class DoctorServiceImpl implements DoctorService {
     }
     
     
+    @Override
+    public void pauseDoctor(Long doctorId) throws InfyHospitalException
+    {
+        Doctor doctor=doctorRepository
+                .findById(doctorId)
+                .orElseThrow(()-> 
+                new InfyHospitalException("Service.NO_DOCTOR_FOUND"));
+        
+        if(Boolean.TRUE.equals(doctor.getPaused()))
+        {
+            throw new InfyHospitalException("Service.DOCTOR_ALREADY_PAUSED");
+            
+        }
+        doctor.setPaused(true);
+        doctor.setPausedAt(LocalDateTime.now());
+        
+        doctorRepository.save(doctor);
+        
+        
+        
+    }
+    
+    @Override
+    public void resumeDoctor(Long doctorId) throws InfyHospitalException
+    {
+        Doctor doctor=doctorRepository
+                .findById(doctorId)
+                .orElseThrow(()-> 
+                new InfyHospitalException("Service.NO_DOCTOR_FOUND"));
+        
+        if(Boolean.FALSE.equals(doctor.getPaused()))
+        {
+            throw new InfyHospitalException("Service.DOCTOR_NOT_PAUSED");
+            
+        }
+        
+        long pausedMinutes=Duration.between(doctor.getPausedAt(), LocalDateTime.now()).toMinutes();
+        
+        Long totalPaused=doctor.getTotalPausedMinutes();
+        
+        if(totalPaused==null)
+        {
+            totalPaused=0L;
+        }
+        doctor.setTotalPausedMinutes(totalPaused+pausedMinutes);
+        doctor.setPaused(false);
+        doctor.setPausedAt(null);
+        
+        doctorRepository.save(doctor);
+        
+    }
+    
+    
 }
+ 
