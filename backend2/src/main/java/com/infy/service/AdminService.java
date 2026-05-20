@@ -29,10 +29,9 @@ public interface AdminService {
     
     List<DoctorScheduleDTO> getAllDoctorSchedules() throws InfyHospitalException;
 
-    AdminStatsSummaryDTO getSummary(LocalDate startDate, LocalDate endDate, Long doctorId) throws InfyHospitalException;
-
     List<DailyPatientCountDTO> getChartData(LocalDate startDate, LocalDate endDate, Long doctorId)
             throws InfyHospitalException;
+
+    AdminStatsSummaryDTO getSummary(Long doctorId, LocalDate startDate, LocalDate endDate) throws InfyHospitalException;
 }
-
-
+ 
