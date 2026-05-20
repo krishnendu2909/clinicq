@@ -1,13 +1,11 @@
 package com.infy.api;
 
 import java.util.List;
-
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
@@ -15,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
 import com.infy.dto.AppointmentDTO;
 import com.infy.dto.AppointmentSearchDTO;
 import com.infy.dto.PatientDTO;
@@ -23,7 +20,6 @@ import com.infy.dto.TokenDTO;
 import com.infy.entity.Doctor;
 import com.infy.exception.InfyHospitalException;
 import com.infy.service.ReceptionistService;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -131,6 +127,7 @@ public ResponseEntity<List<TokenDTO>> getQueue(
    return ResponseEntity.ok(queue);
 }
 
+
 @PreAuthorize("hasRole('RECEPTIONIST')")
 @PutMapping("/move")
 @Operation(summary = "Move Patient from one doctor to other")
@@ -167,7 +164,14 @@ public ResponseEntity<String> reorderQueue(
    return ResponseEntity.ok(message);
 }
 
+@PreAuthorize("hasRole('RECEPTIONIST')")
+@GetMapping("/queue/all")
+@Operation(summary = "Get All queues")
+public ResponseEntity<List<TokenDTO>> getAllQueues() {
+  return ResponseEntity.ok(receptionistService.getAllQueues());
+}
 
 
 
 }
+ 
